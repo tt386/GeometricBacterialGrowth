@@ -1,4 +1,8 @@
 #Imports
+import matplotlib as mpl
+mpl.use('Agg')
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
@@ -500,113 +504,128 @@ Fitted_P_Mono = solve_ivp(MonoCulture_Activity_I0,[0,len(P_Mono)],
         t_eval=np.linspace(0,len(P_Mono)-1,100))
 
 
-plt.figure()
-plt.semilogy(Fitted_S_Mono.t,Fitted_S_Mono.y[0])
-plt.scatter(np.arange(len(S_Mono)),S_Mono)
 
-plt.semilogy(Fitted_P_Mono.t,Fitted_P_Mono.y[0])
-plt.scatter(np.arange(len(P_Mono)),P_Mono)
+
+
+width = 40/25.4 #80/25.4
+fig = plt.figure(figsize=(width, 30 / 25.4))
+ax = fig.add_subplot(111)
+#plt.figure()
+plt.semilogy(Fitted_S_Mono.t,Fitted_S_Mono.y[0],linewidth=1,alpha=0.5)
+plt.scatter(np.arange(len(S_Mono)),S_Mono,marker='+',s=10)
+
+plt.semilogy(Fitted_P_Mono.t,Fitted_P_Mono.y[0],linewidth=1,alpha=0.5)
+plt.scatter(np.arange(len(P_Mono)),P_Mono,marker='x',s=10)
 
 plt.ylim(1e5,1e10)
 
-plt.ylabel("time")
-plt.xlabel("bacteria count")
+ax.set_xticks([0,2,4,6,8,10,12,14])#xticks)
+ax.set_xticklabels([r'$0$',r'$2$',r'$4$',r'$6$',r'$8$',r'$10$',r'$12$',r'$14$'])
+
+ax.set_yticks([1e5,1e6,1e7,1e8,1e9,1e10])
+ax.set_yticklabels([ r'$5$',r'$6$',r'$7$',r'$8$',r'$9$',r'$10$'])
+
+plt.xticks(fontsize=7,fontname='Arial')
+plt.yticks(fontsize=7,fontname='Arial')
+
+#plt.ylabel("time")
+#plt.xlabel("bacteria count")
 
 
-plt.savefig("Activity_Fitting_I0.png")
+plt.savefig("Activity_Fitting_I0.png",bbox_inches='tight',dpi=300)
 plt.close()
 
 
+def Fits():
+    ##############################################################################
+    ###Naive fits#################################################################
+    ##############################################################################
 
-##############################################################################
-###Naive fits#################################################################
-##############################################################################
-
-FITSr=FITPr = np.log10(3)
-SK = np.log10(max(S_Mono))
-PK = np.log10(max(P_Mono))
-SIC = np.log10(S_Mono[0])
-PIC = np.log10(P_Mono[0])
-
-
-########################################################
-print("Fits")
-print("S_Monoculture")
-#Logistic
-params_init = [FITSr,SK,SIC]
-
-objective = MakeObjective_Fits(Logistic,S_Mono)
-S_Mono_Logistic = least_squares(objective,params_init,
-        ftol=1e-10,f_scale=0.05,loss='soft_l1')
-
-print(10**S_Mono_Logistic.x)
-Sr_L,SK_L,SIC_L = S_Mono_Logistic.x
+    FITSr=FITPr = np.log10(3)
+    SK = np.log10(max(S_Mono))
+    PK = np.log10(max(P_Mono))
+    SIC = np.log10(S_Mono[0])
+    PIC = np.log10(P_Mono[0])
 
 
-#Gompertz
-objective = MakeObjective_Fits(Gompertz,S_Mono)
-S_Mono_Gompertz = least_squares(objective,params_init,
-        ftol=1e-10,f_scale=0.05,loss='soft_l1')
+    ########################################################
+    print("Fits")
+    print("S_Monoculture")
+    #Logistic
+    params_init = [FITSr,SK,SIC]
 
-print(10**S_Mono_Gompertz.x)
-Sr_G,SK_G,SIC_G = S_Mono_Gompertz.x
+    objective = MakeObjective_Fits(Logistic,S_Mono)
+    S_Mono_Logistic = least_squares(objective,params_init,
+            ftol=1e-10,f_scale=0.05,loss='soft_l1')
 
-
-#######################################################
-#Comapring fits
-
-t = np.linspace(0,len(S_Mono)-1,100)
-plt.figure()
-plt.semilogy(Fitted_S_Mono.t,Fitted_S_Mono.y[0],
-        linewidth = 3,label='Activity')
-plt.semilogy(t,Logistic(t,Sr_L,SK_L,SIC_L),
-        linewidth=3,linestyle='dashed',label='Logistic Fit')
-plt.semilogy(t,Gompertz(t,Sr_G,SK_G,SIC_G),
-        linewidth=3,linestyle='dotted',label='Gompertz Fit')
-plt.scatter(np.arange(len(S_Mono)),S_Mono,
-        s=40,color='k',marker='x',zorder=10,label='Data')
-plt.savefig("Mono_S_Comparisons.png")
-plt.close()
+    print(10**S_Mono_Logistic.x)
+    Sr_L,SK_L,SIC_L = S_Mono_Logistic.x
 
 
+    #Gompertz
+    objective = MakeObjective_Fits(Gompertz,S_Mono)
+    S_Mono_Gompertz = least_squares(objective,params_init,
+            ftol=1e-10,f_scale=0.05,loss='soft_l1')
 
-#######################################################
-print("P_Monoculture")
-#Logistic
-params_init = [FITPr,PK,PIC]
-
-objective = MakeObjective_Fits(Logistic,P_Mono)
-P_Mono_Logistic = least_squares(objective,params_init,
-        ftol=1e-10,f_scale=0.05,loss='soft_l1')
-
-print(10**P_Mono_Logistic.x)
-Pr_L,PK_L,PIC_L = P_Mono_Logistic.x
+    print(10**S_Mono_Gompertz.x)
+    Sr_G,SK_G,SIC_G = S_Mono_Gompertz.x
 
 
-#Gompertz
-objective = MakeObjective_Fits(Gompertz,P_Mono)
-P_Mono_Gompertz = least_squares(objective,params_init,
-        ftol=1e-10,f_scale=0.05,loss='soft_l1')
+    #######################################################
+    #Comapring fits
 
-print(10**P_Mono_Gompertz.x)
-Pr_G,PK_G,PIC_G = P_Mono_Gompertz.x
+    t = np.linspace(0,len(S_Mono)-1,100)
+    plt.figure()
+    plt.semilogy(Fitted_S_Mono.t,Fitted_S_Mono.y[0],
+            linewidth = 3,label='Activity')
+    plt.semilogy(t,Logistic(t,Sr_L,SK_L,SIC_L),
+            linewidth=3,linestyle='dashed',label='Logistic Fit')
+    plt.semilogy(t,Gompertz(t,Sr_G,SK_G,SIC_G),
+            linewidth=3,linestyle='dotted',label='Gompertz Fit')
+    plt.scatter(np.arange(len(S_Mono)),S_Mono,
+            s=40,color='k',marker='x',zorder=10,label='Data')
+    plt.savefig("Mono_S_Comparisons.png")
+    plt.close()
 
-#######################################################
 
 
-#Comparing fits
-t = np.linspace(0,len(P_Mono)-1,100)
-plt.figure()
-plt.semilogy(Fitted_P_Mono.t,Fitted_P_Mono.y[0],
-        linewidth = 3,label='Activity')
-plt.semilogy(t,Logistic(t,Pr_L,PK_L,PIC_L),
-        linewidth=3,linestyle='dashed',label='Logistic Fit')
-plt.semilogy(t,Gompertz(t,Pr_G,PK_G,PIC_G),
-        linewidth=3,linestyle='dotted',label='GOompertz Fit')
-plt.scatter(np.arange(len(P_Mono)),P_Mono,
-        s=40,color='k',marker='x',zorder=10,label='Data')
-plt.savefig("Mono_P_Comparisons.png")
-plt.close()
+    #######################################################
+    print("P_Monoculture")
+    #Logistic
+    params_init = [FITPr,PK,PIC]
+
+    objective = MakeObjective_Fits(Logistic,P_Mono)
+    P_Mono_Logistic = least_squares(objective,params_init,
+            ftol=1e-10,f_scale=0.05,loss='soft_l1')
+
+    print(10**P_Mono_Logistic.x)
+    Pr_L,PK_L,PIC_L = P_Mono_Logistic.x
+
+
+    #Gompertz
+    objective = MakeObjective_Fits(Gompertz,P_Mono)
+    P_Mono_Gompertz = least_squares(objective,params_init,
+            ftol=1e-10,f_scale=0.05,loss='soft_l1')
+
+    print(10**P_Mono_Gompertz.x)
+    Pr_G,PK_G,PIC_G = P_Mono_Gompertz.x
+
+    #######################################################
+
+
+    #Comparing fits
+    t = np.linspace(0,len(P_Mono)-1,100)
+    plt.figure()
+    plt.semilogy(Fitted_P_Mono.t,Fitted_P_Mono.y[0],
+            linewidth = 3,label='Activity')
+    plt.semilogy(t,Logistic(t,Pr_L,PK_L,PIC_L),
+            linewidth=3,linestyle='dashed',label='Logistic Fit')
+    plt.semilogy(t,Gompertz(t,Pr_G,PK_G,PIC_G),
+            linewidth=3,linestyle='dotted',label='GOompertz Fit')
+    plt.scatter(np.arange(len(P_Mono)),P_Mono,
+            s=40,color='k',marker='x',zorder=10,label='Data')
+    plt.savefig("Mono_P_Comparisons.png")
+    plt.close()
 
 
 
@@ -690,90 +709,92 @@ plt.close()
 """
 ######################################################################################
 
-#FIgS2
 
-Values = ("S_ATC_P_A14","S_ATC_P_A14_LBPLATES","S_RYC165_P_PA14","S_RYC157_P_PA14","S_RYC157_P_RYC157")
+def Coculturing():
+    #FIgS2
 
-for DATA in Values:
+    Values = ("S_ATC_P_A14","S_ATC_P_A14_LBPLATES","S_RYC165_P_PA14","S_RYC157_P_PA14","S_RYC157_P_RYC157")
 
-    print("Working with DATA:",DATA)
+    for DATA in Values:
 
-    if DATA == "S_ATC_P_A14":
-        S_Co = np.asarray([3366666.66666667,4816666.66666667,12483333.3333333,38000000,166666666.666667,283333333.333333,325000000,478333333.333333,571666666.666667,630000000,251166666.666667,173333333.333333,45000000,27333333.3333333])
+        print("Working with DATA:",DATA)
 
-        P_Co = np.asarray([1700000,2016666.66666667,5100000,23333333.3333333,130000000,320000000,666666666.666667,1783333333.33333,2266666666.66667,2533333333.33333,3400000000,3650000000,3400000000,3333333333.33333])
+        if DATA == "S_ATC_P_A14":
+            S_Co = np.asarray([3366666.66666667,4816666.66666667,12483333.3333333,38000000,166666666.666667,283333333.333333,325000000,478333333.333333,571666666.666667,630000000,251166666.666667,173333333.333333,45000000,27333333.3333333])
 
-    elif DATA =="S_ATC_P_A14_LBPLATES":
-        S_Co = np.asarray([2133333.33333333,3166666.66666667,6133333.33333333,34500000,60333333.3333333,271666666.666667,533333333.333333,900000000,413333333.333333,268333333.333333,47500000,19166666.6666667,9833333.33333333,3166666.66666667])
+            P_Co = np.asarray([1700000,2016666.66666667,5100000,23333333.3333333,130000000,320000000,666666666.666667,1783333333.33333,2266666666.66667,2533333333.33333,3400000000,3650000000,3400000000,3333333333.33333])
 
-        P_Co = np.asarray([2350000,2416666.66666667,6033333.33333333,16333333.3333333,21500000,145000000,446666666.666667,1083333333.33333,1750000000,2000000000,2383333333.33333,2750000000,2833333333.33333,3100000000])
+        elif DATA =="S_ATC_P_A14_LBPLATES":
+            S_Co = np.asarray([2133333.33333333,3166666.66666667,6133333.33333333,34500000,60333333.3333333,271666666.666667,533333333.333333,900000000,413333333.333333,268333333.333333,47500000,19166666.6666667,9833333.33333333,3166666.66666667])
 
-
-    elif DATA == "S_RYC157_P_RYC157":
-        S_Co = np.asarray([2066666.66666667,2233333.33333333,11333333.3333333,18333333.3333333,38166666.6666667,256666666.666667,423333333.333333,1366666666.66667,2283333333.33333,2150000000,2366666666.66667,2733333333.33333,3050000000,3200000000,3783333333.33333,3983333333.33333,4800000000,4533333333.33333,3983333333.33333,3766666666.66667,3716666666.66667,2300000000,1950000000,215000000])
-
-        P_Co = np.asarray([1316666.66666667,356666.666666667,2500000,2233333.33333333,2916666.66666667,4583333.33333333,11333333.3333333,13166666.6666667,24666666.6666667,29500000,35500000,68166666.6666667,148333333.333333,325000000,233333333.333333,265000000,341666666.666667,396666666.666667,691666666.666667,966666666.666667,670000000,1933333333.33333,1783333333.33333,1750000000])
-
-    elif DATA == "S_RYC157_P_PA14":
-        S_Co = np.asarray([3266666.66666667,3133333.33333333,5066666.66666667,13500000,34333333.3333333,270000000,318333333.333333,286666666.666667,330000000,218333333.333333,43833333.3333333,4500000,1933333.33333333,1366666.66666667])
-
-        P_Co = np.asarray([578333.333333333,713333.333333333,2950000,4266666.66666667,37000000,285000000,858333333.333333,1083333333.33333,840000000,1106666666.66667,1833333333.33333,1700000000,2266666666.66667,2650000000])
-
-    elif DATA == "S_RYC165_P_PA14":
-        S_Co = np.asarray([2150000,2333333.33333333,3916666.66666667,21833333.3333333,40666666.6666667,236666666.666667,169666666.666667,280000000,331666666.666667,363333333.333333,233333333.333333,34666666.6666667,2650000,728333.333333333])
-
-        P_Co = np.asarray([743333.333333333,1083333.33333333,4116666.66666667,19166666.6666667,43000000,218333333.333333,290000000,416666666.666667,603333333.333333,1200000000,1366666666.66667,1405000000,1933333333.33333,1503333333.33333])
-
-    #Coculture: Indep
-    params_init = (np.asarray([Sr,Sb,Sg1,Sg2,ST,0,Pr,Pb,Pg1,Pg2,PT,0,kl,np.log10(S_Co[0]),np.log10(P_Co[0])]))
-
-    lowerbounds = [0,0,-2,-2,np.log10(3),-1,    0,0,-2,-2,np.log10(3),-1,   -13,    np.log10(S_Co[0])-1,np.log10(P_Co[0])-1]
-    upperbounds = [np.log10(2),3,1,0,1.1,0,       np.log10(2),3,1,0,1.1,0,      -8,      np.log10(S_Co[0])+1,np.log10(P_Co[0])+1]
-
-    if DATA == "S_RYC157_P_RYC157":
-        upperbounds[10] = 2
-
-    print(params_init)
-    print(lowerbounds)
-    print(upperbounds)
-
-    objective = MakeObjective(CoCulture_Independently,[S_Co,P_Co],[S_Co[0],P_Co[0],0])
-    results = least_squares(objective,params_init,ftol=1e-10,f_scale=0.05,loss='soft_l1',bounds=(lowerbounds,upperbounds))
+            P_Co = np.asarray([2350000,2416666.66666667,6033333.33333333,16333333.3333333,21500000,145000000,446666666.666667,1083333333.33333,1750000000,2000000000,2383333333.33333,2750000000,2833333333.33333,3100000000])
 
 
+        elif DATA == "S_RYC157_P_RYC157":
+            S_Co = np.asarray([2066666.66666667,2233333.33333333,11333333.3333333,18333333.3333333,38166666.6666667,256666666.666667,423333333.333333,1366666666.66667,2283333333.33333,2150000000,2366666666.66667,2733333333.33333,3050000000,3200000000,3783333333.33333,3983333333.33333,4800000000,4533333333.33333,3983333333.33333,3766666666.66667,3716666666.66667,2300000000,1950000000,215000000])
 
-    print(10**results.x)
+            P_Co = np.asarray([1316666.66666667,356666.666666667,2500000,2233333.33333333,2916666.66666667,4583333.33333333,11333333.3333333,13166666.6666667,24666666.6666667,29500000,35500000,68166666.6666667,148333333.333333,325000000,233333333.333333,265000000,341666666.666667,396666666.666667,691666666.666667,966666666.666667,670000000,1933333333.33333,1783333333.33333,1750000000])
+
+        elif DATA == "S_RYC157_P_PA14":
+            S_Co = np.asarray([3266666.66666667,3133333.33333333,5066666.66666667,13500000,34333333.3333333,270000000,318333333.333333,286666666.666667,330000000,218333333.333333,43833333.3333333,4500000,1933333.33333333,1366666.66666667])
+
+            P_Co = np.asarray([578333.333333333,713333.333333333,2950000,4266666.66666667,37000000,285000000,858333333.333333,1083333333.33333,840000000,1106666666.66667,1833333333.33333,1700000000,2266666666.66667,2650000000])
+
+        elif DATA == "S_RYC165_P_PA14":
+            S_Co = np.asarray([2150000,2333333.33333333,3916666.66666667,21833333.3333333,40666666.6666667,236666666.666667,169666666.666667,280000000,331666666.666667,363333333.333333,233333333.333333,34666666.6666667,2650000,728333.333333333])
+
+            P_Co = np.asarray([743333.333333333,1083333.33333333,4116666.66666667,19166666.6666667,43000000,218333333.333333,290000000,416666666.666667,603333333.333333,1200000000,1366666666.66667,1405000000,1933333333.33333,1503333333.33333])
+
+        #Coculture: Indep
+        params_init = (np.asarray([Sr,Sb,Sg1,Sg2,ST,0,Pr,Pb,Pg1,Pg2,PT,0,kl,np.log10(S_Co[0]),np.log10(P_Co[0])]))
+
+        lowerbounds = [0,0,-2,-2,np.log10(3),-1,    0,0,-2,-2,np.log10(3),-1,   -13,    np.log10(S_Co[0])-1,np.log10(P_Co[0])-1]
+        upperbounds = [np.log10(2),3,1,0,1.1,0,       np.log10(2),3,1,0,1.1,0,      -8,      np.log10(S_Co[0])+1,np.log10(P_Co[0])+1]
+
+        if DATA == "S_RYC157_P_RYC157":
+            upperbounds[10] = 2
+        """
+        print(params_init)
+        print(lowerbounds)
+        print(upperbounds)
+        """
+        objective = MakeObjective(CoCulture_Independently,[S_Co,P_Co],[S_Co[0],P_Co[0],0])
+        results = least_squares(objective,params_init,ftol=1e-10,f_scale=0.05,loss='soft_l1',bounds=(lowerbounds,upperbounds))
 
 
-    ICs = [10**results.x[-2],10**results.x[-1],0]
-    Fitted = solve_ivp(CoCulture_Independently,[0,len(S_Co)],ICs,args=tuple(results.x[:-2]),
-                    t_eval=np.arange(len(S_Co)))#np.linspace(0,len(S_Co)-1,100))
+
+        print(10**results.x)
 
 
-    
-    print("S.aureus", DATA)
-    print(*Fitted.y[0],sep=', ')
-
-    print("Psuedo",DATA)
-    print(*Fitted.y[1],sep=', ')
+        ICs = [10**results.x[-2],10**results.x[-1],0]
+        Fitted = solve_ivp(CoCulture_Independently,[0,len(S_Co)],ICs,args=tuple(results.x[:-2]),
+                        t_eval=np.arange(len(S_Co)))#np.linspace(0,len(S_Co)-1,100))
 
 
-    plt.figure()
-    plt.semilogy(Fitted.t,Fitted.y[0],label='S')
-    plt.semilogy(Fitted.t,Fitted.y[1],label = 'P')
+        
+        print("S.aureus", DATA)
+        print(*Fitted.y[0],sep=', ')
 
-    plt.scatter(np.arange(len(S_Co)),S_Co)
-    plt.scatter(np.arange(len(P_Co)),P_Co)
+        print("Psuedo",DATA)
+        print(*Fitted.y[1],sep=', ')
 
 
-    plt.ylim(1e5,1e10)
+        plt.figure()
+        plt.semilogy(Fitted.t,Fitted.y[0],label='S')
+        plt.semilogy(Fitted.t,Fitted.y[1],label = 'P')
 
-    plt.title(str(DATA))
-    plt.ylabel("time")
-    plt.xlabel("bacteria count")
+        plt.scatter(np.arange(len(S_Co)),S_Co)
+        plt.scatter(np.arange(len(P_Co)),P_Co)
 
-    plt.savefig("Coculture_Independently_" +str(DATA) + ".png")
-    plt.close()
+
+        plt.ylim(1e5,1e10)
+
+        plt.title(str(DATA))
+        plt.xlabel("time")
+        plt.ylabel("bacteria count")
+
+        plt.savefig("Coculture_Independently_" +str(DATA) + ".png")
+        plt.close()
 
 
 
@@ -843,10 +864,15 @@ plt.close()
 
 print("Both at same time")
 
-params_init = (Sr,Sb,Sb,Sg1,np.log10(S_Mono_Open[0]),np.log10(S_Co_Open[0]))
+params_init = (0,1,2,Sg1,np.log10(S_Mono_Open[0]),np.log10(S_Co_Open[0]))
+lower = (-1,0,0,-2,-np.inf,-np.inf)
+upper = (0.3,3,3,1,np.inf,np.inf)
+
+
 objective = MakeObjective_OffTimes(MonoCulture_Activity_Open,[S_Mono_Open,S_Co_Open],
         [S_Mono_Open[0],S_Co_Open[0]],[S_Mono_Open_Time,S_Co_Open_Time])
-results = least_squares(objective,params_init,ftol=1e-10,f_scale=0.05,loss='soft_l1')
+results = least_squares(objective,params_init,ftol=1e-10,f_scale=0.05,loss='soft_l1',
+        bounds=[lower,upper])
 
 print(10**results.x)
 
@@ -878,13 +904,39 @@ plt.savefig("OpenSystem_BOTH.png")
 plt.close()
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ##############################################################################
 #Pseudomonas open
 P_Open = [157,161.5,172,169,181,213,292.5,292,235,191.5,168,156,149,138,117,113,115,110.5,111.5,102.5,109,108.5,125,119,117.5,135.5,134.5]
 
 P_Open_Time = [0,0.4,0.7,1,1.3,1.5,2,2.3,2.8,3.1,3.4,3.5,3.8,4.1,4.5,4.9,5.2,5.6,5.9,6.3,6.6,7,7.4,7.7,8.1,8.8,9.4]
 
-
+Pr = 1
 Pg1 = 3.8
 Pb = 150
 params_init = (np.log10(Pr),np.log10(Pb),np.log10(Pg1),-2,0,np.log10(P_Open[0]))
@@ -949,12 +1001,12 @@ print("Fitting Pmono open and closed at same time")
 def MakeObjective_POffTime_ClosedOpen(Model_Closed,Model_Open,datas,time):
 
     def objective(params):
-        alpha,b_closed,b_open,g1,g2,T,Ex,Ec,X0_Closed,X0_Open = params
+        alpha,b_closed,b_open,g1,g2,T,I0,Ex,Ec,X0_Closed,X0_Open = params
 
 
         #ICs are Clsed X(0), Open X(0), and Open Q(0)
         ICs = [10**X0_Closed]
-        params= (alpha,b_closed,g1,g2,T)
+        params= (alpha,b_closed,g1,g2,T,I0)
 
         result_Closed = solve_ivp(Model_Closed,[0,time[0][-1]],ICs,args=tuple(params),
                 t_eval=time[0])
@@ -975,9 +1027,9 @@ def MakeObjective_POffTime_ClosedOpen(Model_Closed,Model_Open,datas,time):
 
 
 
-params_init = (Pr,Pb,Pb,Pg1,np.log10(Pg2),np.log10(PT),Ex,Ec,np.log10(P_Mono[0]),np.log10(P_Open[0]))
+params_init = (Pr,Pb,Pb,Pg1,Pg2,PT,0,Ex,Ec,np.log10(P_Mono[0]),np.log10(P_Open[0]))
 
-objective = MakeObjective_POffTime_ClosedOpen(MonoCulture_Activity,MonoCulture_Activity_POpen,[P_Mono,P_Open],
+objective = MakeObjective_POffTime_ClosedOpen(MonoCulture_Activity_I0,MonoCulture_Activity_POpen,[P_Mono,P_Open],
         [np.arange(len(P_Mono)),P_Open_Time])
 results = least_squares(objective,params_init,ftol=1e-10,f_scale=1,loss='soft_l1')#,
 #        bounds = [lower,upper])
@@ -986,12 +1038,12 @@ print(10**results.x)
 
 
 
-Pr,PbClosed,PbOpen,Pg1,Pg2,PT,Ex,Ec,X0_Closed,X0_Open = results.x
+Pr,PbClosed,PbOpen,Pg1,Pg2,PT,I0,Ex,Ec,X0_Closed,X0_Open = results.x
 
-Params_Closed = (Pr,PbClosed,Pg1,Pg2,PT)
+Params_Closed = (Pr,PbClosed,Pg1,Pg2,PT,I0)
 ICs = [10**X0_Closed]
 
-result_Closed = solve_ivp(MonoCulture_Activity,[0,len(P_Mono)],ICs,args=tuple(Params_Closed),
+result_Closed = solve_ivp(MonoCulture_Activity_I0,[0,len(P_Mono)],ICs,args=tuple(Params_Closed),
                 t_eval=np.linspace(0,len(P_Mono),100))#np.arange(len(P_Mono)))
 
 
