@@ -155,12 +155,12 @@ def CoCulture_From_Mono(t,z,kl,ST,PT):
 ##############################################################################
 
 def CoCulture_Independently(t,z,
-        Sr,Sb,Sg1,Sg2,ST,
-        Pr,Pb,Pg1,Pg2,PT,
+        Sr,Sb,Sg1,Sg2,ST,SI0,
+        Pr,Pb,Pg1,Pg2,PT,PI0,
         kl):
     SX,PX,L = z
 
-    
+    #print(t) 
     Sr = 10**Sr
     Pr = 10**Pr
 
@@ -178,21 +178,26 @@ def CoCulture_Independently(t,z,
     ST = 10**ST
     PT = 10**PT
 
+    SI0 = 10**SI0
+    PI0 = 10**PI0
+
+    #print(Sr,Pr,Sb,Pb,Sg1,Pg1,Sg2,Pg2,kl,ST,PT,SI0,PI0)
+
 
     if t < ST:
-        Srate = Sr * np.exp(-Sb * np.exp(-Sg1*t))
+        Srate = Sr * np.exp(-Sb *SI0* np.exp(-Sg1*t))
 
     else:
-        Srate = Sr * np.exp(-Sb * (1 + (np.exp(-Sg1*ST)-1) * 
+        Srate = Sr * np.exp(-Sb * (1 + (SI0 * np.exp(-Sg1*ST)-1) * 
             np.exp(-Sg2*(t-ST))))
 
     dSXdt = Srate * SX - kl*SX*L
 
     if t < PT:
-        Prate = Pr * np.exp(-Pb * np.exp(-Pg1*t))
+        Prate = Pr * np.exp(-Pb * PI0 * np.exp(-Pg1*t))
 
     else:
-        Prate = Pr * np.exp(-Pb * (1 + (np.exp(-Pg1*PT)-1) * 
+        Prate = Pr * np.exp(-Pb * (1 + (PI0 * np.exp(-Pg1*PT)-1) * 
             np.exp(-Pg2*(t-PT))))
 
     dPXdt = Prate * PX
@@ -265,7 +270,7 @@ def MakeObjective(Model,data,ICs):
             params = params[:-2]
 
         result = solve_ivp(Model,[0,len(data[0])],ICs,args=tuple(params),
-                t_eval=np.arange(len(data[0])))
+                t_eval=np.arange(len(data[0])),method='RK45')
 
 
         if len(result.y) == 1:
@@ -395,7 +400,7 @@ PIC = np.log10(P_Mono[0])
 
 ##############################################################################
 
-
+"""
 ##############################################
 #S Monoculture
 print("S. monoculture")
@@ -445,7 +450,7 @@ plt.xlabel("bacteria count")
 
 plt.savefig("Activity_Fitting.png")
 plt.close()
-
+"""
 
 #############################################################################
 #Account for I0##############################################
@@ -468,6 +473,7 @@ S_Mono_results_I0 = least_squares(objective,params_init,
         bounds = (lower,upper))
 
 print(10**S_Mono_results_I0.x)
+Sr,Sb,Sg1,Sg2,ST,SI0,SIC = S_Mono_results_I0.x
 ##############################################
 #P Monoculture
 print("P monoculture")
@@ -479,6 +485,7 @@ P_Mono_results_I0 = least_squares(objective,params_init,
         bounds=(lower,upper))
 
 print(10**P_Mono_results_I0.x)
+Pr,Pb,Pg1,Pg2,PT,PI0,PIC = P_Mono_results_I0.x
 ##############################################
 
 
@@ -515,7 +522,7 @@ plt.close()
 ###Naive fits#################################################################
 ##############################################################################
 
-Sr=Pr = np.log10(3)
+FITSr=FITPr = np.log10(3)
 SK = np.log10(max(S_Mono))
 PK = np.log10(max(P_Mono))
 SIC = np.log10(S_Mono[0])
@@ -526,7 +533,7 @@ PIC = np.log10(P_Mono[0])
 print("Fits")
 print("S_Monoculture")
 #Logistic
-params_init = [Sr,SK,SIC]
+params_init = [FITSr,SK,SIC]
 
 objective = MakeObjective_Fits(Logistic,S_Mono)
 S_Mono_Logistic = least_squares(objective,params_init,
@@ -566,7 +573,7 @@ plt.close()
 #######################################################
 print("P_Monoculture")
 #Logistic
-params_init = [Pr,PK,PIC]
+params_init = [FITPr,PK,PIC]
 
 objective = MakeObjective_Fits(Logistic,P_Mono)
 P_Mono_Logistic = least_squares(objective,params_init,
@@ -608,7 +615,7 @@ plt.close()
 
 
 
-
+"""
 print("Coculture")
 #Coculture: From the above results
 Sr,Sb,Sg1,Sg2,ST,SIC =10**S_Mono_results.x 
@@ -647,7 +654,7 @@ plt.xlabel("bacteria count")
 
 
 plt.savefig("Coculture_From_Mono.png")
-
+"""
 #######################################################################################
 
 """
@@ -718,11 +725,17 @@ for DATA in Values:
         P_Co = np.asarray([743333.333333333,1083333.33333333,4116666.66666667,19166666.6666667,43000000,218333333.333333,290000000,416666666.666667,603333333.333333,1200000000,1366666666.66667,1405000000,1933333333.33333,1503333333.33333])
 
     #Coculture: Indep
-    params_init = np.log10(np.asarray([Sr,Sb,Sg1,Sg2,ST,Pr,Pb,Pg1,Pg2,PT,kl,S_Co[0],P_Co[0]]))
+    params_init = (np.asarray([Sr,Sb,Sg1,Sg2,ST,0,Pr,Pb,Pg1,Pg2,PT,0,kl,np.log10(S_Co[0]),np.log10(P_Co[0])]))
 
-    lowerbounds = [-2,0,-2,-2,0,    -2,0,-2,-2,0,   -13,    -np.inf,-np.inf]
-    upperbounds = [1,3,2,2,2,       1,3,2,2,2,      -9,      np.inf,np.inf]
+    lowerbounds = [0,0,-2,-2,np.log10(3),-1,    0,0,-2,-2,np.log10(3),-1,   -13,    np.log10(S_Co[0])-1,np.log10(P_Co[0])-1]
+    upperbounds = [np.log10(2),3,1,0,1.1,0,       np.log10(2),3,1,0,1.1,0,      -8,      np.log10(S_Co[0])+1,np.log10(P_Co[0])+1]
 
+    if DATA == "S_RYC157_P_RYC157":
+        upperbounds[10] = 2
+
+    print(params_init)
+    print(lowerbounds)
+    print(upperbounds)
 
     objective = MakeObjective(CoCulture_Independently,[S_Co,P_Co],[S_Co[0],P_Co[0],0])
     results = least_squares(objective,params_init,ftol=1e-10,f_scale=0.05,loss='soft_l1',bounds=(lowerbounds,upperbounds))
