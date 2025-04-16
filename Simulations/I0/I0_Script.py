@@ -1115,7 +1115,7 @@ ax1.semilogy(Fitted_Mono_Closed.t, Fitted_Mono_Closed.y[0], linewidth=1,color='k
 ax1.scatter(np.arange(len(S_Mono)),S_Mono, marker='s', s=s, color='none',edgecolors='k', zorder=2,alpha = 0.5)
 
 ax1.set_yticks([1e6, 1e7, 1e8, 1e9, 1e10])
-ax1.set_yticklabels([r'$6$', r'$7$', r'$8$', r'$9$', r'$10$'])
+ax1.set_yticklabels([r'$10^6$', r'$10^7$', r'$10^8$', r'$10^9$', r'$10^{10}$'])
 ax1.set_ylim(1e6, 1e10)
 
 # X axis
@@ -1138,7 +1138,7 @@ ax2.scatter(S_Co_Open_Time,S_Co_Open, marker='o', s=s, color='none',edgecolors='
 
 
 ax2.set_yticks([1e0, 1e1, 1e2, 1e3])
-ax2.set_yticklabels([r'$0$',r'$1$', r'$2$', r'$3$'])
+ax2.set_yticklabels([r'$10^0$',r'$10^1$', r'$10^2$', r'$10^3$'])
 ax2.set_ylim(1, 1e3)
 
 plt.xticks(fontsize=7, fontname='Arial')
@@ -1316,7 +1316,7 @@ ax1.semilogy(result_Closed.t, result_Closed.y[0], linewidth=1,color='k')
 ax1.scatter(result_Closed.t[:len(P_Mono)], P_Mono, marker='s', s=s, color='none',edgecolors='k', zorder=5,alpha=0.5)
 
 ax1.set_yticks([1e6, 1e7, 1e8, 1e9, 1e10])
-ax1.set_yticklabels([r'$6$', r'$7$', r'$8$', r'$9$', r'$10$'])
+ax1.set_yticklabels([r'$10^6$', r'$10^7$', r'$10^8$', r'$10^9$', r'$10^{10}$'])
 ax1.set_ylim(1e6, 1e10)
 
 # X axis
@@ -1334,7 +1334,7 @@ ax2.semilogy(result_Open.t, result_Open.y[0], linewidth=1,linestyle='dashed',col
 ax2.scatter(P_Open_Time, P_Open, marker='o', s=s, color='none',edgecolors='k', zorder=5,alpha=0.5)
 
 ax2.set_yticks([1e1, 1e2, 1e3])
-ax2.set_yticklabels([r'$1$', r'$2$', r'$3$'])
+ax2.set_yticklabels([r'$10^1$', r'$10^2$', r'$10^3$'])
 ax2.set_ylim(10, 1e3)
 
 plt.xticks(fontsize=7, fontname='Arial')
