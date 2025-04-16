@@ -991,6 +991,183 @@ plt.savefig("OpenSystem_ALL.png")
 plt.close()
 
 
+#Fitting Smono open and closed all same time
+
+
+
+def MakeObjective_OffTimes_ClosedOpen(Model_Closed,Model_Open,datas,time):
+
+    def objective(params):
+        #alpha,b_closed,b_openMono,b_openCo,g1,g2,T,I0,X0_Closed,X0_OpenMono,X0_OpenCo = params
+        #alpha,b,I_closed,I_openMono,I_openCo,g1,g2,T,X0_Closed,X0_OpenMono,X0_OpenCo = params
+        alpha, b,I_closed,I_openMono,bI0,    g1_mono,g1_co,g2, T, X0_Closed,X0_OpenMono,X0_OpenCo = params
+
+        #ICs are Clsed X(0), Open X(0), and Open Q(0)
+        ICs = [10**X0_Closed]
+        #params= (alpha,b_closed,g1,g2,T,I0)
+        params = (alpha,b,g1_mono,g2,T,I_closed)
+        result_Closed = solve_ivp(Model_Closed,[0,time[0][-1]],ICs,args=tuple(params),
+                t_eval=time[0])
+
+
+
+        #params = (alpha,b_openMono,g1)
+        params = (alpha,b+I_openMono,g1_mono)
+        ICs = [10**X0_OpenMono]
+
+        result_OpenMono = solve_ivp(Model_Open,[0,time[1][-1]],ICs,args=tuple(params),
+                t_eval=time[1])
+
+
+        #params = (alpha,b_openCo,g1)
+        params = (alpha,bI0,g1_co)
+        ICs = [10**X0_OpenCo]
+
+        result_OpenCo = solve_ivp(Model_Open,[0,time[2][-1]],ICs,args=tuple(params),
+                t_eval=time[2])
+
+
+
+        output = np.concatenate((result_Closed.y[0],result_OpenMono.y[0],result_OpenCo.y[0]))
+        output[output<0] = 1e-10
+
+        return np.log10(output) - np.log10(np.concatenate((datas[0],datas[1],datas[2])))
+
+    return objective
+
+
+"""
+params_init = (0,1,2,3,     -1,Sg2,ST,0,   np.log10(S_Mono[0]),np.log10(S_Mono_Open[0]),np.log10(S_Co_Open[0]))
+lower = (-1,0,0,0,  -2,-2,0,-np.inf,  -np.inf,-np.inf,-np.inf)
+upper = (0.3,3,3,3,   1,0,1,0,  np.inf,np.inf,np.inf)
+"""
+#Params
+#alpha, B,I0,I1,BI0,    g1_mono,g1_co,g2, T
+params_init = (0,   2,-2,-1,2,  -1,-1,-3,   ST, np.log10(S_Mono[0]),np.log10(S_Mono_Open[0]),np.log10(S_Co_Open[0]))
+lower       = (0,   0,-5,-5,-5, -3,-3,-5,   0,  -np.inf,-np.inf,-np.inf)
+upper       = (0.3, 4,0,0,5,    1,1,0,      1,  np.inf,np.inf,np.inf)
+
+"""
+params_init = (0,   3,-2,-3,0,  -1,-3,ST,   np.log10(S_Mono[0]),np.log10(S_Mono_Open[0]),np.log10(S_Co_Open[0]))
+lower       = (0,   0,-4,-4,-4, -2,-4,0,    -np.inf,-np.inf,-np.inf)
+upper       = (0.3, 4,0,0,0,    1,0,1,      np.inf,np.inf,np.inf)
+"""
+
+objective = MakeObjective_OffTimes_ClosedOpen(
+        MonoCulture_Activity_I0,MonoCulture_Activity_Open,[S_Mono,S_Mono_Open,S_Co_Open],
+        [np.arange(len(S_Mono)),S_Mono_Open_Time,S_Co_Open_Time])
+results = least_squares(objective,params_init,ftol=1e-14,f_scale=0.05,loss='soft_l1',
+        bounds=[lower,upper])
+
+print("ALL S MONO")
+print(10**results.x)
+
+#Sr,Sb0,Sb1,Sb2,Sg1,Sg2,ST,SI0,SMonoClosed0,SMono0,SCo0 = results.x
+#Sr,Sb,I0,I1,I2,Sg1,Sg2,ST,SMonoClosed0,SMono0,SCo0 = results.x
+Sr,Sb,I0_closed,I0_open,bI0,Sg1_mono,Sg1_co,Sg2,ST,SMonoClosed0,SMono0,SCo0 = results.x
+
+ICs = [10**SMonoClosed0]
+
+#MonoClosed
+#params = (Sr,Sb0,Sg1,Sg2,ST,SI0)
+params = (Sr,Sb,Sg1_mono,Sg2,ST,I0_closed)
+Fitted_Mono_Closed = solve_ivp(MonoCulture_Activity_I0,[0,len(S_Mono)],ICs,args=tuple(params),
+        t_eval=np.arange(len(S_Mono)))
+
+ICs = [10**SMono0]
+#Mono
+#params = (Sr,Sb1,Sg1)
+params = (Sr,Sb+I0_open,Sg1_mono)
+Fitted_Mono = solve_ivp(MonoCulture_Activity_Open,[0,S_Mono_Open_Time[-1]],ICs,args=tuple(params),
+                t_eval=S_Mono_Open_Time)
+
+#Co
+ICs = [10**SCo0]
+#params = (Sr,Sb2,Sg1)
+params = (Sr,bI0,Sg1_co)
+Fitted_Co = solve_ivp(MonoCulture_Activity_Open,[0,S_Co_Open_Time[-1]],ICs,args=tuple(params),
+                t_eval=S_Co_Open_Time)
+
+
+plt.figure()
+
+plt.semilogy(Fitted_Mono_Closed.t,Fitted_Mono_Closed.y[0])
+plt.scatter(np.arange(len(S_Mono)),S_Mono)
+
+
+plt.semilogy(Fitted_Mono.t,Fitted_Mono.y[0])
+plt.scatter(S_Mono_Open_Time,S_Mono_Open)
+
+plt.semilogy(Fitted_Co.t,Fitted_Co.y[0])
+plt.scatter(S_Co_Open_Time,S_Co_Open)
+
+
+plt.savefig("All_S_Mono.png")
+plt.close()
+
+
+width = 40 / 25.4
+fig, ax1 = plt.subplots(figsize=(width, 30 / 25.4))
+
+s = 5
+# LEFT AXIS: Closed system
+ax1.semilogy(Fitted_Mono_Closed.t, Fitted_Mono_Closed.y[0], linewidth=1,color='k',zorder=5)
+ax1.scatter(np.arange(len(S_Mono)),S_Mono, marker='s', s=s, color='none',edgecolors='k', zorder=2,alpha = 0.5)
+
+ax1.set_yticks([1e6, 1e7, 1e8, 1e9, 1e10])
+ax1.set_yticklabels([r'$6$', r'$7$', r'$8$', r'$9$', r'$10$'])
+ax1.set_ylim(1e6, 1e10)
+
+# X axis
+ax1.set_xticks([0, 2, 4, 6, 8, 10, 12, 14])
+ax1.set_xticklabels([r'$0$', r'$2$', r'$4$', r'$6$', r'$8$', r'$10$', r'$12$', r'$14$'])
+
+
+plt.xticks(fontsize=7, fontname='Arial')
+plt.yticks(fontsize=7, fontname='Arial')
+
+
+# RIGHT AXIS: Open system
+ax2 = ax1.twinx()
+
+ax2.semilogy(Fitted_Mono.t,Fitted_Mono.y[0], linewidth=1,linestyle='dashed',color='k',zorder=5)
+ax2.scatter(S_Mono_Open_Time,S_Mono_Open, marker='o', s=s, color='none',edgecolors='k', zorder=2,alpha=0.5)
+
+ax2.semilogy(Fitted_Co.t,Fitted_Co.y[0], linewidth=1,linestyle='dashed',color='gray',zorder=5)
+ax2.scatter(S_Co_Open_Time,S_Co_Open, marker='o', s=s, color='none',edgecolors='gray', zorder=2,alpha=0.5)
+
+
+ax2.set_yticks([1e0, 1e1, 1e2, 1e3])
+ax2.set_yticklabels([r'$0$',r'$1$', r'$2$', r'$3$'])
+ax2.set_ylim(1, 1e3)
+
+plt.xticks(fontsize=7, fontname='Arial')
+plt.yticks(fontsize=7, fontname='Arial')
+
+plt.savefig("All_S_Mono.png", bbox_inches='tight', dpi=300)
+plt.close()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1001,17 +1178,18 @@ print("Fitting Pmono open and closed at same time")
 def MakeObjective_POffTime_ClosedOpen(Model_Closed,Model_Open,datas,time):
 
     def objective(params):
-        alpha,b_closed,b_open,g1,g2,T,I0,Ex,Ec,X0_Closed,X0_Open = params
+        #alpha,b_closed,b_open,g1,g2,T,I0,Ex,Ec,X0_Closed,X0_Open = params
+        alpha,b,IOpen,IClosed,g1,g2,T,Ex,Ec,X0_Closed,X0_Open = params
 
 
         #ICs are Clsed X(0), Open X(0), and Open Q(0)
         ICs = [10**X0_Closed]
-        params= (alpha,b_closed,g1,g2,T,I0)
+        params= (alpha,b,g1,g2,T,IClosed)
 
         result_Closed = solve_ivp(Model_Closed,[0,time[0][-1]],ICs,args=tuple(params),
                 t_eval=time[0])
 
-        params = (alpha,b_open,g1,Ex,Ec)
+        params = (alpha,b+IOpen,g1,Ex,Ec)
         ICs = [10**X0_Open,0]
 
         result_Open = solve_ivp(Model_Open,[0,time[1][-1]],ICs,args=tuple(params),
@@ -1027,24 +1205,30 @@ def MakeObjective_POffTime_ClosedOpen(Model_Closed,Model_Open,datas,time):
 
 
 
-params_init = (Pr,Pb,Pb,Pg1,Pg2,PT,0,Ex,Ec,np.log10(P_Mono[0]),np.log10(P_Open[0]))
+#params_init = (Pr,Pb,Pb,Pg1,Pg2,PT,0,Ex,Ec,np.log10(P_Mono[0]),np.log10(P_Open[0]))
+params_init = (Pr,Pb,0,0,Pg1,Pg2,PT,Ex,Ec,np.log10(P_Mono[0]),np.log10(P_Open[0]))
+
+lower = (-1,0,-5,-5,-4,-4,0,-5,-5,0,0)
+upper = (0.5,3,0,0,1,1,1,1,1,np.inf,np.inf)
 
 objective = MakeObjective_POffTime_ClosedOpen(MonoCulture_Activity_I0,MonoCulture_Activity_POpen,[P_Mono,P_Open],
         [np.arange(len(P_Mono)),P_Open_Time])
-results = least_squares(objective,params_init,ftol=1e-10,f_scale=1,loss='soft_l1')#,
-#        bounds = [lower,upper])
+results = least_squares(objective,params_init,ftol=1e-10,f_scale=1,loss='soft_l1',
+        bounds = [lower,upper])
 
 print(10**results.x)
 
 
 
-Pr,PbClosed,PbOpen,Pg1,Pg2,PT,I0,Ex,Ec,X0_Closed,X0_Open = results.x
+#Pr,PbClosed,PbOpen,Pg1,Pg2,PT,I0,Ex,Ec,X0_Closed,X0_Open = results.x
+Pr,Pb,IOpen,IClosed,Pg1,Pg2,PT,Ex,Ec,X0_Closed,X0_Open = results.x
 
-Params_Closed = (Pr,PbClosed,Pg1,Pg2,PT,I0)
+
+Params_Closed = (Pr,Pb,Pg1,Pg2,PT,IClosed)
 ICs = [10**X0_Closed]
 
 result_Closed = solve_ivp(MonoCulture_Activity_I0,[0,len(P_Mono)],ICs,args=tuple(Params_Closed),
-                t_eval=np.linspace(0,len(P_Mono),100))#np.arange(len(P_Mono)))
+                t_eval=np.arange(len(P_Mono)))
 
 
 plt.figure()
@@ -1061,11 +1245,11 @@ plt.close()
 
 
 
-Params_Open = (Pr,PbOpen,Pg1)
+Params_Open = (Pr,Pb+IOpen,Pg1,Ex,Ec)
 ICs = [10**X0_Open,0]
 
-result_Open = solve_ivp(MonoCulture_Activity_POpen,[0,P_Open_Time[-1]],ICs,args=tuple(params),
-                t_eval=np.linspace(0,P_Open_Time[-1],100))#P_Open_Time)
+result_Open = solve_ivp(MonoCulture_Activity_POpen,[0,P_Open_Time[-1]],ICs,args=tuple(Params_Open),
+                t_eval=P_Open_Time)
 
 plt.figure()
 plt.semilogy(result_Open.t,result_Open.y[0],label='With Closed')
@@ -1080,8 +1264,84 @@ plt.close()
 
 
 
+"""
+width = 40/25.4 #80/25.4
+#fig = plt.figure(figsize=(width, 30 / 25.4))
+#ax = fig.add_subplot(111)
+
+fig, ax1 = plt.subplots(figsize=(width, 30 / 25.4))
+
+#plt.figure()
+ax1.semilogy(result_Closed.t,result_Closed.y[0],linewidth=1,alpha=0.5)
+ax1.scatter(np.arange(len(P_Mono)),P_Mono,marker='+',s=10)
+
+ax1.set_yticks([1e1,1e2,1e3])
+ax1.set_yticklabels([ r'$1$',r'$2$',r'$3$'])
+
+ax1.set_ylim(10,1e3)
 
 
+ax1.set_xticks([0,2,4,6,8,10,12,14])#xticks)
+ax1.set_xticklabels([r'$0$',r'$2$',r'$4$',r'$6$',r'$8$',r'$10$',r'$12$',r'$14$'])
+
+
+
+ax2 = ax1.twinx()
+
+ax2.semilogy(result_Open.t,result_Open.y[0],linewidth=1,alpha=0.5)
+ax2.scatter(P_Open_Time,P_Open,marker='x',s=10)
+
+#plt.ylim(1e2,1e10)
+
+
+ax2.set_yticks([1e6,1e7,1e8,1e9,1e10])
+ax2.set_yticklabels([ r'$6$',r'$7$',r'$8$',r'$9$',r'$10$'])
+
+ax2.set_ylim(1e6,1e10)
+
+plt.xticks(fontsize=7,fontname='Arial')
+plt.yticks(fontsize=7,fontname='Arial')
+
+#plt.ylabel("time")
+#plt.xlabel("bacteria count")
+plt.savefig("All_P_Mono_Fitting.png",bbox_inches='tight',dpi=300)
+plt.close()
+"""
+width = 40 / 25.4
+fig, ax1 = plt.subplots(figsize=(width, 30 / 25.4))
+
+s = 5
+# LEFT AXIS: Closed system
+ax1.semilogy(result_Closed.t, result_Closed.y[0], linewidth=1,color='k')
+ax1.scatter(result_Closed.t[:len(P_Mono)], P_Mono, marker='s', s=s, color='none',edgecolors='k', zorder=5,alpha=0.5)
+
+ax1.set_yticks([1e6, 1e7, 1e8, 1e9, 1e10])
+ax1.set_yticklabels([r'$6$', r'$7$', r'$8$', r'$9$', r'$10$'])
+ax1.set_ylim(1e6, 1e10)
+
+# X axis
+ax1.set_xticks([0, 2, 4, 6, 8, 10, 12, 14])
+ax1.set_xticklabels([r'$0$', r'$2$', r'$4$', r'$6$', r'$8$', r'$10$', r'$12$', r'$14$'])
+
+
+plt.xticks(fontsize=7, fontname='Arial')
+plt.yticks(fontsize=7, fontname='Arial')
+
+
+# RIGHT AXIS: Open system
+ax2 = ax1.twinx()
+ax2.semilogy(result_Open.t, result_Open.y[0], linewidth=1,linestyle='dashed',color='k')
+ax2.scatter(P_Open_Time, P_Open, marker='o', s=s, color='none',edgecolors='k', zorder=5,alpha=0.5)
+
+ax2.set_yticks([1e1, 1e2, 1e3])
+ax2.set_yticklabels([r'$1$', r'$2$', r'$3$'])
+ax2.set_ylim(10, 1e3)
+
+plt.xticks(fontsize=7, fontname='Arial')
+plt.yticks(fontsize=7, fontname='Arial')
+
+plt.savefig("All_P_Mono_Fitting.png", bbox_inches='tight', dpi=300)
+plt.close()
 
 
 

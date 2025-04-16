@@ -4,12 +4,14 @@ path_dst=$1
 
 
 Sources=(
-	Simulations/I0/Activity_Fitting_I0.png
+	Simulations/I0/All_S_Mono.png
+	Simulations/I0/All_P_Mono_Fitting.png
 )
 
 
 Names=(
-	Mono_Fits.png
+	S_Fits.png
+	P_Fits.png
 )
 
 
