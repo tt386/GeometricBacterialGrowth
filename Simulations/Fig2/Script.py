@@ -1,0 +1,160 @@
+#Generic Imports
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.integrate import solve_ivp
+from scipy.optimize import least_squares
+
+
+#Import my functions and Data
+import sys
+sys.path.insert(0,'../Core')
+
+import Models
+import Objectives
+from Data import *
+
+#############################################################################
+#Obtain starting parameters from Fig1                                       #
+output_params = np.load("../Fig1/output_params.npz")                        #
+                                                                            #
+Sr = output_params["Sr"]                                                    #
+Sb = output_params["Sb"]                                                    #
+Sg1 = output_params["Sg1_mono"]                                             #
+Sg2 = output_params["Sg2"]                                                  #
+ST = output_params["ST"]                                                    #
+SI0 = output_params["SI0_closed"]                                           #
+                                                                            #
+Pr = output_params["Pr"]                                                    #
+Pb = output_params["Pb"]                                                    #
+Pg1 = output_params["Pg1"]                                                  #
+Pg2 = output_params["Pg2"]                                                  #
+PT = output_params["PT"]                                                    #
+PI0 = output_params["PIClosed"]                                             #
+#############################################################################
+
+
+DATA = ['S_Mono','P_Mono']
+
+for i in DATA:
+    if i == 'S_Mono':
+        data = S_Mono
+    elif i =='P_Mono':
+        data = P_Mono
+
+    print("Parameter fitting for ",i)
+
+    ##############################################################################
+    ##############################################################################
+    ##############################################################################
+
+    #Naive Isolated
+    #Fitting of S.aureus
+    if i == 'S_Mono':
+        #params_init = (np.log10(1.85),np.log10(28),np.log10(0.48),np.log10(1.64*10**-2),np.log10(3.39),3.57*10**-2,np.log10(data[0]))
+        params_init = (Sr,Sb,Sg1,Sg2,ST,SI0,np.log10(data[0]))
+    elif i == 'P_Mono':
+        params_init = (Pr,Pb,Pg1,Pg2,PT,PI0,np.log10(data[0]))
+        #params_init = (np.log10(1.18),np.log10(48),np.log10(3.65),np.log10(2.94*10**-2),np.log10(6.39),np.log10(0.93),np.log10(data[0]))
+
+
+    objective = Objectives.MakeObjective(
+            Models.MonoCulture_Closed,[data],[0])
+
+    results = least_squares(objective,params_init,ftol=1e-14,f_scale=0.05,loss='soft_l1')#,
+    #        bounds=[lower,upper])
+
+    #Sr,Sb,I0_closed,I0_open,bI0,Sg1_mono,Sg1_co,Sg2,ST,SMonoClosed0,SMono0,SCo0 = results.x
+
+    Sr,Sb,Sg1_mono,Sg2,ST,I0_closed,SMonoClosed0 = results.x
+
+    print(10**results.x)
+    print(results.cost)
+    ICs = [10**SMonoClosed0]
+
+    #MonoClosed
+    #params = (Sr,Sb0,Sg1,Sg2,ST,SI0)
+    params = (Sr,Sb,Sg1_mono,Sg2,ST,I0_closed)
+    Fitted_Mono_Closed = solve_ivp(Models.MonoCulture_Closed,[0,len(data)],ICs,args=tuple(params),
+            t_eval=np.arange(len(data)))
+
+
+    
+    params_init = [np.log10(1.5),np.log10(data[-1]),np.log10(4),np.log10(data[0])]
+
+    #Logistic
+    objective = Objectives.MakeObjective_Fits(Models.Logistic,data)
+    S_Mono_Logistic = least_squares(objective,params_init,
+            ftol=1e-12,f_scale=0.05,loss='soft_l1')
+
+    print(10**S_Mono_Logistic.x)
+    print(S_Mono_Logistic.cost)
+    Sr_L,SK_L,SIC_L,t0_L = S_Mono_Logistic.x
+
+
+    #Gompertz
+    objective = Objectives.MakeObjective_Fits(Models.Gompertz,data)
+    S_Mono_Gompertz = least_squares(objective,params_init,
+            ftol=1e-12,f_scale=0.05,loss='soft_l1')
+
+    print(10**S_Mono_Gompertz.x)
+    print(S_Mono_Gompertz.cost)
+    Sr_G,SK_G,SIC_G,t0_G = S_Mono_Gompertz.x
+
+
+
+    #######################################################
+    #Comapring fits
+
+    t = np.linspace(0,len(data)-1,100)
+
+
+    width = 40 / 25.4
+    fig, ax1 = plt.subplots(figsize=(width, 30 / 25.4))
+
+    s = 5
+    # LEFT AXIS: LOG
+    ax1.semilogy(Fitted_Mono_Closed.t,Fitted_Mono_Closed.y[0],
+            linewidth = 1,label='Activity',color='k',alpha=0.5)
+    ax1.semilogy(t,Models.Logistic(t,Sr_L,SK_L,SIC_L,t0_L),
+            linewidth=1,linestyle='dashed',color='k',alpha=0.5)
+    ax1.semilogy(t,Models.Gompertz(t,Sr_G,SK_G,SIC_G,t0_G),
+            linewidth=1,linestyle='dotted',color='k',alpha=0.5)
+    ax1.scatter(np.arange(len(data)),data,
+            s=s,color='k',zorder=10)
+
+    ax1.set_yticks([1e6, 1e7, 1e8, 1e9, 1e10])
+    ax1.set_yticklabels([r'$10^6$', r'$10^7$', r'$10^8$', r'$10^9$', r'$10^{10}$'])
+    ax1.set_ylim(1e6, 1e10)
+
+    # X axis
+    ax1.set_xticks([0, 2, 4, 6, 8, 10, 12, 14])
+    ax1.set_xticklabels([r'$0$', r'$2$', r'$4$', r'$6$', r'$8$', r'$10$', r'$12$', r'$14$'])
+
+
+    plt.xticks(fontsize=7, fontname='Arial')
+    plt.yticks(fontsize=7, fontname='Arial')
+
+    # RIGHT AXIS: Linear
+    ax2 = ax1.twinx()
+
+    ax2.plot(Fitted_Mono_Closed.t,Fitted_Mono_Closed.y[0],
+            linewidth = 1,label='Activity',color='k',alpha=0.2)
+    ax2.plot(t,Models.Logistic(t,Sr_L,SK_L,SIC_L,t0_L),
+            linewidth=1,linestyle='dashed',color='k',alpha=0.2)
+    ax2.plot(t,Models.Gompertz(t,Sr_G,SK_G,SIC_G,t0_G),
+            linewidth=1,linestyle='dotted',color='k',alpha=0.2)
+    ax2.scatter(np.arange(len(data)),data,
+            s=s,color='k',marker='x',zorder=10)
+
+    ax2.set_yticks([0, 1e9, 2e9, 3e9])
+    ax2.set_yticklabels([r'$0$',r'$1$', r'$2$', r'$3$'])
+    ax2.set_ylim(0, 3.5 * 10**9)
+
+    plt.xticks(fontsize=7, fontname='Arial')
+    plt.yticks(fontsize=7, fontname='Arial')
+
+
+    plt.savefig(str(i) + "_Comparisons.png",bbox_inches='tight', dpi=300)
+    plt.close()
+
+

@@ -51,27 +51,27 @@ results = least_squares(objective,params_init,ftol=1e-14,f_scale=0.05,loss='soft
 print("ALL S MONO")
 print(10**results.x)
 
-Sr,Sb,I0_closed,I0_open,bI0,Sg1_mono,Sg1_co,Sg2,ST,SMonoClosed0,SMono0,SCo0 = results.x
+Sr,Sb,SI0_closed,SI0_open,SbI0,Sg1_mono,Sg1_co,Sg2,ST,SMonoClosed0,SMono0,SCo0 = results.x
 
 ICs = [10**SMonoClosed0]
 
 #MonoClosed
 #params = (Sr,Sb0,Sg1,Sg2,ST,SI0)
-params = (Sr,Sb,Sg1_mono,Sg2,ST,I0_closed)
+params = (Sr,Sb,Sg1_mono,Sg2,ST,SI0_closed)
 Fitted_Mono_Closed = solve_ivp(Models.MonoCulture_Closed,[0,len(S_Mono)],ICs,args=tuple(params),
         t_eval=np.arange(len(S_Mono)))
 
 ICs = [10**SMono0]
 #Mono
 #params = (Sr,Sb1,Sg1)
-params = (Sr,Sb+I0_open,Sg1_mono)
+params = (Sr,Sb+SI0_open,Sg1_mono)
 Fitted_Mono = solve_ivp(Models.MonoCulture_Open_Saureus,[0,S_Mono_Open_Time[-1]],ICs,args=tuple(params),
                 t_eval=S_Mono_Open_Time)
 
 #Co
 ICs = [10**SCo0]
 #params = (Sr,Sb2,Sg1)
-params = (Sr,bI0,Sg1_co)
+params = (Sr,SbI0,Sg1_co)
 Fitted_Co = solve_ivp(Models.MonoCulture_Open_Saureus,[0,S_Co_Open_Time[-1]],ICs,args=tuple(params),
                 t_eval=S_Co_Open_Time)
 
@@ -168,19 +168,19 @@ results = least_squares(objective,params_init,ftol=1e-14,f_scale=1,
 print(10**results.x)
 
 
-Pr,Pb,IOpen,IClosed,Pg1,Pg2,PT,Ex,Ec,X0_Closed,X0_Open = results.x
+Pr,Pb,PIOpen,PIClosed,Pg1,Pg2,PT,Ex,Ec,PX0_Closed,PX0_Open = results.x
 
 
-Params_Closed = (Pr,Pb,Pg1,Pg2,PT,IClosed)
-ICs = [10**X0_Closed]
+Params_Closed = (Pr,Pb,Pg1,Pg2,PT,PIClosed)
+ICs = [10**PX0_Closed]
 
 result_Closed = solve_ivp(Models.MonoCulture_Closed,[0,len(P_Mono)],ICs,args=tuple(Params_Closed),
                 t_eval=np.arange(len(P_Mono)))
 
 
 
-Params_Open = (Pr,Pb+IOpen,Pg1,Ex,Ec)
-ICs = [10**X0_Open,0]
+Params_Open = (Pr,Pb+PIOpen,Pg1,Ex,Ec)
+ICs = [10**PX0_Open,0]
 
 result_Open = solve_ivp(Models.MonoCulture_Open_Paeruginosa,[0,P_Open_Time[-1]],ICs,args=tuple(Params_Open),
                 t_eval=P_Open_Time)
@@ -228,4 +228,37 @@ plt.close()
 
 
 
+##############################################################################
+##############################################################################
+##############################################################################
 
+
+
+#Save Data
+outputfilename = "output_params.npz"
+
+np.savez(outputfilename,
+        Sr=Sr,
+        Sb=Sb,
+        SI0_closed=SI0_closed,
+        SI0_open=SI0_open,
+        SbI0=SbI0,
+        Sg1_mono=Sg1_mono,
+        Sg1_co=Sg1_co,
+        Sg2=Sg2,
+        ST=ST,
+        SMonoClosed0=SMonoClosed0,
+        SMono0=SMono0,
+        SCo0=SCo0,
+
+        Pr=Pr,
+        Pb=Pb,
+        PIOpen=PIOpen,
+        PIClosed=PIClosed,
+        Pg1=Pg1,
+        Pg2=Pg2,
+        PT=PT,
+        Ex=Ex,
+        Ec=Ec,
+        PX0_Closed=PX0_Closed,
+        PX0_Open=PX0_Open)
