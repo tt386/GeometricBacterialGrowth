@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.optimize import least_squares
-
+from scipy.optimize import newton
 
 #Import my functions and Data
 import sys
@@ -20,17 +20,75 @@ from Data import *
 
 
 #Fitting of S.aureus
-"""
-Log10 of the Params
-#alpha, 
-B,I0,I1,BI0,
-g1_mono,g1_co,g2,T,
-MonoClosed init, MonoOpen Init, CoOpen Init
+
+#Log10 of the Params
+Param_Names = ("alpha", 
+"B","I0","I1","BI0",
+"g1_mono","g1_co","g2","T",
+"MonoClosed init", "MonoOpen Init", "CoOpen Init")
+
+#Observed:
+ST = 4  #Last point of linearity
+
+#Mono closed
+tlag_closed = 1     #Time at which the lag ends
+lagwidth_closed = 1 #Approximate width of the lag
+
+#Mono_open
+tlag_monoopen = 0.1
+lagwidth_monoopen = 1
+
+#Co_open
+tlag_open = 6
+lagwidth_open = 4
+
+tendlag_closed =  12 - ST        #Time when saturation phase starts, minus T
+endlagwidth_closed = 8          #Width of the saturation transition
+
+
+
+SMonoClosed0 = S_Mono[0]
+SMono0 = S_Mono_Open[0]
+SCo0 = S_Co_Open[0]
+
+
+#Parameter estimation:
+Sr = np.max(np.diff(np.log(S_Mono)))
+Sg1_mono = 1/lagwidth_closed * np.log((3 + np.sqrt(5))/(3 - np.sqrt(5)))
+Sg1_co = 1/lagwidth_open * np.log((3 + np.sqrt(5))/(3 - np.sqrt(5)))
+Sg2 = 1/endlagwidth_closed * np.log((3+np.sqrt(5))/ (3 - np.sqrt(5)))
+
+Sb = np.exp(Sg2 * tendlag_closed)
+SI0_closed = np.exp(tlag_closed * Sg1_mono) / Sb
+SI0_open =  np.exp(tlag_monoopen * Sg1_mono) / Sb
+SbI0 = np.exp(tlag_open * Sg1_co)
+
+
+params_init = np.log10(np.asarray([Sr,
+        Sb,SI0_closed,SI0_open,SbI0,
+        Sg1_mono,Sg1_co,Sg2,
+        ST,
+        SMonoClosed0,SMono0,SCo0]))
+
+lower= (0,   
+        0,-5,-5,-5,
+        -3,-3,-5,0,
+        -np.inf,-np.inf,-np.inf)
+upper= (0.3,
+        4,0,0,5,
+        1,1,0,
+        1,
+        np.inf,np.inf,np.inf)
+
+for i in range(len(params_init)):
+    print(Param_Names[i],lower[i],params_init[i],upper[i],sep='\t')
+
 """
 params_init = (np.log10(1.8),   
         2,-2,-1,1,  
         -1,-1,-3,np.log10(4), 
         np.log10(S_Mono[0]),np.log10(S_Mono_Open[0]),np.log10(S_Co_Open[0]))
+
 lower= (0,   
         0,-5,-5,-5,
         -3,-3,-5,0,
@@ -39,12 +97,12 @@ upper= (0.3,
         4,0,0,5,
         1,1,0,1,
         np.inf,np.inf,np.inf)
-
+"""
 
 objective = Objectives.MakeObjective_ClosedOpen_Saureus(
         Models.MonoCulture_Closed,Models.MonoCulture_Open_Saureus,[S_Mono,S_Mono_Open,S_Co_Open],
         [np.arange(len(S_Mono)),S_Mono_Open_Time,S_Co_Open_Time])
-results = least_squares(objective,params_init,ftol=1e-14,f_scale=0.05,loss='soft_l1',
+results = least_squares(objective,params_init,ftol=1e-14,f_scale=1,loss='soft_l1',
         bounds=[lower,upper],
         max_nfev=100000)
 
@@ -54,6 +112,10 @@ print(10**results.x)
 Sr,Sb,SI0_closed,SI0_open,SbI0,Sg1_mono,Sg1_co,Sg2,ST,SMonoClosed0,SMono0,SCo0 = results.x
 
 ICs = [10**SMonoClosed0]
+
+for i in range(len(params_init)):
+    print(Param_Names[i],10**params_init[i],10**results.x[i],sep='\t')
+
 
 #MonoClosed
 #params = (Sr,Sb0,Sg1,Sg2,ST,SI0)
@@ -130,32 +192,82 @@ plt.close()
 ##############################################################################
 
 print("P. aeruginosa fitting")
-"""
-Params:
-alpha,
-b,IOpen,IClosed,
-g1,g2,T,
-Ex,Ec,
-X0_Closed,X0_Open
-"""
+
+#Params:
+Param_Names = ("alpha",
+"b","IOpen","IClosed",
+"g1","g2","T",
+"Ex","Ec",
+"X0_Closed","X0_Open")
 
 
+#Observed:
+PT = 7
+
+#Mono closed
+tlag_closed = 1
+lagwidth_closed = 1
+
+
+#Co_open
+tlag_open = 1
+lagwidth_open = 1
+
+
+tendlag_closed =  8 - PT
+endlagwidth_closed = 1
+
+
+
+PX0_Closed = P_Mono[0]
+PX0_Open = P_Open[0]
+
+Period = 8
+Stable  = 100
+
+
+#Parameter estimation:
+Pr = np.max(np.diff(np.log(P_Mono)))
+Pg1 = 1/lagwidth_closed * np.log((3 + np.sqrt(5))/(3 - np.sqrt(5)))
+Pg2 = 1/endlagwidth_closed * np.log((3+np.sqrt(5))/ (3 - np.sqrt(5)))
+
+Pb = np.exp(Pg2 * tendlag_closed)
+PIClosed = np.exp(tlag_closed * Pg1) / Pb
+PIOpen =  np.exp(tlag_open * Pg1) / Pb
+
+Ec = (4*Pr - np.sqrt(16*Pr**2 - 64*np.pi**2/Period**2))/2
+Ex = Ec * Pr/Stable
+
+
+params_init = np.log10(np.asarray([Pr,
+        Pb,PIOpen,PIClosed,
+        Pg1,Pg2,PT,
+        Ex,Ec,
+        PX0_Closed,PX0_Open]))
+
+
+"""
 params_init = (np.log10(1.1),
         1.5,0,-1,
         0,-2,np.log10(6),
         np.log10(7.2e-3),np.log10(8e-1),
         np.log10(P_Mono[0]),np.log10(P_Open[0]))
-
+"""
 lower = (-1,
         0,-5,-5,
         -4,-4,0,
         -5,-5,
-        0,0)
+        0,params_init[-1]-0.1)
 upper = (0.5,
         3,0,0,
         1,1,1,
         1,1,
         np.inf,np.inf)
+
+for i in range(len(params_init)):
+    print(lower[i],params_init[i],upper[i])
+
+
 
 objective = Objectives.MakeObjective_ClosedOpen_Paeruginosa(
         Models.MonoCulture_Closed,Models.MonoCulture_Open_Paeruginosa,
@@ -167,6 +279,9 @@ results = least_squares(objective,params_init,ftol=1e-14,f_scale=1,
 
 print(10**results.x)
 
+
+for i in range(len(params_init)):
+    print(Param_Names[i],10**params_init[i],10**results.x[i],sep='\t')
 
 Pr,Pb,PIOpen,PIClosed,Pg1,Pg2,PT,Ex,Ec,PX0_Closed,PX0_Open = results.x
 

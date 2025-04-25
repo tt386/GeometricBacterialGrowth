@@ -96,10 +96,10 @@ for DATA in Values:
     lowerbounds = [0,0,-3,-3,np.log10(3),-3,    0,0,-2,-2,np.log10(3),-3,   -13,    np.log10(S_Co[0])-1,np.log10(P_Co[0])-1]
     upperbounds = [np.log10(2),3,1,0,1.1,0,       np.log10(2),3,1,0,1.1,0,      -8,      np.log10(S_Co[0])+1,np.log10(P_Co[0])+1]
 
-    """
+    
     for j in range(len(params_init)):
         print(lowerbounds[j],params_init[j],upperbounds[j])
-    """
+    
     if DATA == "S_RYC157_P_RYC157":
         #Change in this case as the data is sso evidently different
         params_init[6] = -1
@@ -109,7 +109,7 @@ for DATA in Values:
 
 
     objective = Objectives.MakeObjective_Coculture(Models.CoCulture_Independently,[S_Co,P_Co],[S_Co[0],P_Co[0],0])
-    results = least_squares(objective,params_init,ftol=1e-10,f_scale=0.05,loss='soft_l1',bounds=(lowerbounds,upperbounds))
+    results = least_squares(objective,params_init,ftol=1e-10,f_scale=1,loss='soft_l1',bounds=(lowerbounds,upperbounds))
 
 
     
