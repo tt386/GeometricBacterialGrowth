@@ -92,14 +92,14 @@ for DATA in Values:
 
     #Coculture: Indep
     params_init = (np.asarray([Sr,Sb,Sg1,Sg2,ST,SI0,Pr,Pb,Pg1,Pg2,PT,PI0,kl,np.log10(S_Co[0]),np.log10(P_Co[0])]))
-    print(params_init)
+    #print(params_init)
     lowerbounds = [0,0,-3,-3,np.log10(3),-3,    0,0,-2,-2,np.log10(3),-3,   -13,    np.log10(S_Co[0])-1,np.log10(P_Co[0])-1]
     upperbounds = [np.log10(2),3,1,0,1.1,0,       np.log10(2),3,1,0,1.1,0,      -8,      np.log10(S_Co[0])+1,np.log10(P_Co[0])+1]
 
-    
+    """
     for j in range(len(params_init)):
         print(lowerbounds[j],params_init[j],upperbounds[j])
-    
+    """
     if DATA == "S_RYC157_P_RYC157":
         #Change in this case as the data is sso evidently different
         params_init[6] = -1
@@ -113,7 +113,7 @@ for DATA in Values:
 
 
     
-    print(10**results.x)
+    #print(10**results.x)
     print("r",10**results.x[0],10**results.x[6])
     print("b",10**results.x[1],10**results.x[7])
     print("g1",10**results.x[2],10**results.x[8])

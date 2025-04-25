@@ -6,12 +6,18 @@ path_dst=$1
 Sources=(
 	Simulations/Fig1/All_S_Mono.png
 	Simulations/Fig1/All_P_Mono_Fitting.png
+
+	Simulations/Fig2/S_Mono_Comparisons.png
+	Simulations/Fig2/P_Mono_Comparisons.png
 )
 
 
 Names=(
 	S_Fits.png
 	P_Fits.png
+
+	S_Comparisons.png
+	P_Comparisons.png
 )
 
 
