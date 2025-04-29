@@ -218,3 +218,27 @@ def Gompertz(t,b,K,t0,IC):
 
     return IC + (K-IC) * np.exp(-np.exp(-b*(t-t0)))#IC * np.exp( np.log(K/IC) * ( -np.exp(-b*t)))
 
+
+
+
+
+
+
+
+def Kinetic_Monoculture(t,z,
+        kc,Y,kx):
+
+    X,C,Se = z
+
+    kc = 10**kc
+    Y = 10**Y
+    kx = 10**kx
+
+
+    dXdt = -kc*X*Se + (1+Y)*kx*C
+
+    dCdt = kc*X*Se - kx*C
+
+    dSedt = -kc*X*Se
+
+    return [dXdt,dCdt,dSedt]

@@ -158,3 +158,88 @@ for i in DATA:
     plt.close()
 
 
+
+
+
+
+    #Doing Kinetic fits
+    #Params: kc,Y,kx, X0
+    print("Kinetic Fit")
+    
+    
+
+    """
+    data *= 100
+    params_kinetic = (-11,9,0,np.log10(data[0]))
+
+    lower = [-12,8,-1,params_kinetic[-1]-1]
+    upper = [-10,10,1,params_kinetic[-1]+1]
+    """
+
+
+    params_kinetic = (-9,10,0,np.log10(data[0]))
+
+    lower = [-10,8,-1,params_kinetic[-1]-1]
+    upper = [-8,12,1,params_kinetic[-1]+1]
+
+    objective = Objectives.MakeObjective_Kinetic(Models.Kinetic_Monoculture,[data])
+    KineticModel = least_squares(objective,params_kinetic,bounds=(lower,upper),
+            ftol=1e-12,f_scale=1,loss='soft_l1')
+
+    kc,Y,kx,X0 = KineticModel.x
+
+    print(10**KineticModel.x)
+    print(KineticModel.cost)
+    params = (kc,Y,kx)
+
+    Fitted_Kinetic = solve_ivp(Models.Kinetic_Monoculture,[0,len(data)],[10**X0,0,0.1],args=tuple(params),
+            t_eval=np.arange(len(data)))
+
+
+
+
+
+    width = 40 / 25.4
+    fig, ax1 = plt.subplots(figsize=(width, 30 / 25.4))
+
+    s = 5
+    # LEFT AXIS: LOG
+    ax1.semilogy(Fitted_Mono_Closed.t,Fitted_Mono_Closed.y[0],
+            linewidth = 1,label='Activity',color='k',alpha=0.5)
+    ax1.semilogy(Fitted_Kinetic.t,Fitted_Kinetic.y[0],
+            linewidth=1,linestyle='-.',color='k',alpha=0.5)
+    ax1.scatter(np.arange(len(data)),data,
+            s=s,color='k',zorder=10)
+
+    ax1.set_yticks([1e6, 1e7, 1e8, 1e9, 1e10])
+    ax1.set_yticklabels([r'$10^6$', r'$10^7$', r'$10^8$', r'$10^9$', r'$10^{10}$'])
+    ax1.set_ylim(1e6, 1e10)
+
+    # X axis
+    ax1.set_xticks([0, 2, 4, 6, 8, 10, 12, 14])
+    ax1.set_xticklabels([r'$0$', r'$2$', r'$4$', r'$6$', r'$8$', r'$10$', r'$12$', r'$14$'])
+
+
+    plt.xticks(fontsize=7, fontname='Arial')
+    plt.yticks(fontsize=7, fontname='Arial')
+
+    # RIGHT AXIS: Linear
+    ax2 = ax1.twinx()
+
+    ax2.plot(Fitted_Mono_Closed.t,Fitted_Mono_Closed.y[0],
+            linewidth = 1,label='Activity',color='k',alpha=0.2)
+    ax2.plot(Fitted_Kinetic.t,Fitted_Kinetic.y[0],
+            linewidth=1,linestyle='-.',color='k',alpha=0.2)
+    ax2.scatter(np.arange(len(data)),data,
+            s=s,color='k',marker='x',zorder=10)
+
+    ax2.set_yticks([0, 1e9, 2e9, 3e9])
+    ax2.set_yticklabels([r'$0$',r'$1$', r'$2$', r'$3$'])
+    ax2.set_ylim(0, 3.5 * 10**9)
+
+    plt.xticks(fontsize=7, fontname='Arial')
+    plt.yticks(fontsize=7, fontname='Arial')
+
+
+    plt.savefig(str(i) + "_KineticComparisons.png",bbox_inches='tight', dpi=300)
+    plt.close()

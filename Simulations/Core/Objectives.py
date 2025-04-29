@@ -148,11 +148,24 @@ def MakeObjective_Fits(Model,data):
 
 
 
+def MakeObjective_Kinetic(Model,data):
 
+    def objective(params):
+        ICs = [10**params[-1],0,0.1]
 
+        params = params[:-1]
 
+        result = solve_ivp(Model,[0,len(data[0])],ICs,args=tuple(params),
+                t_eval=np.arange(len(data[0])))
 
+        output = result.y[0]
 
+        if len(output) != len(data[0]):
+            output = np.ones(len(data[0]))
+
+        return np.log10(output) - np.log10(data[0])
+
+    return objective
 
 
 def MakeObjective(Model,data,ICs):

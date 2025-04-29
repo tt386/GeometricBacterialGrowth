@@ -9,6 +9,9 @@ Sources=(
 
 	Simulations/Fig2/S_Mono_Comparisons.png
 	Simulations/Fig2/P_Mono_Comparisons.png
+
+	Simulations/Fig2/S_Mono_KineticComparisons.png
+	Simulations/Fig2/P_Mono_KineticComparisons.png
 )
 
 
@@ -18,6 +21,9 @@ Names=(
 
 	S_Comparisons.png
 	P_Comparisons.png
+
+	S_Kinetic_Comparison.png
+	P_Kinetic_Comparison.png
 )
 
 
