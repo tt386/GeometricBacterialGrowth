@@ -32,6 +32,9 @@ PT = output_params["PT"]                                                    #
 PI0 = output_params["PIClosed"]                                             #
 #############################################################################
 
+#Loss function
+lossfun = 'linear'#'soft_l1'
+f_scale = 1#0.05
 
 DATA = ['S_Mono','P_Mono']
 
@@ -60,15 +63,15 @@ for i in DATA:
     objective = Objectives.MakeObjective(
             Models.MonoCulture_Closed,[data],[0])
 
-    results = least_squares(objective,params_init,ftol=1e-14,f_scale=0.05,loss='soft_l1')#,
+    results = least_squares(objective,params_init,ftol=1e-14,f_scale=f_scale,loss=lossfun)#,
     #        bounds=[lower,upper])
 
     #Sr,Sb,I0_closed,I0_open,bI0,Sg1_mono,Sg1_co,Sg2,ST,SMonoClosed0,SMono0,SCo0 = results.x
 
     Sr,Sb,Sg1_mono,Sg2,ST,I0_closed,SMonoClosed0 = results.x
 
-    print(10**results.x)
-    print(results.cost)
+    print("Geometric Fitting",10**results.x)
+    print("Geometric Cost",results.cost)
     ICs = [10**SMonoClosed0]
 
     #MonoClosed
@@ -79,25 +82,45 @@ for i in DATA:
 
 
     
-    params_init = [np.log10(1.5),np.log10(data[-1]),np.log10(4),np.log10(data[0])]
+    #Param Estimations
+    X0 = data[0]
+    XF= data[-1]
+    if i == "S_Mono":
+        t0 = 8
+    elif i == "P_Mono":
+        t0 = 6
+    params_init = [np.log10(1.5),np.log10(XF),np.log10(t0),np.log10(X0)]
 
     #Logistic
+    print("Logistic")
+
+    #Estimate k:
+    #k = -np.gradient((XF-X0)/(data-X0))[t0]
+    k = 4/(XF-X0) * np.gradient(data)[t0]
+    print("Logistic Estimated k is",k)
+    params_init[0] = np.log10(k)
+    print("Logistic Initial Guess",10**np.asarray(params_init))
     objective = Objectives.MakeObjective_Fits(Models.Logistic,data)
     S_Mono_Logistic = least_squares(objective,params_init,
-            ftol=1e-12,f_scale=0.05,loss='soft_l1')
+            ftol=1e-12,f_scale=f_scale,loss=lossfun)
 
-    print(10**S_Mono_Logistic.x)
-    print(S_Mono_Logistic.cost)
+    print("Logistic Fitting",10**S_Mono_Logistic.x)
+    print("Logistic Cost",S_Mono_Logistic.cost)
     Sr_L,SK_L,SIC_L,t0_L = S_Mono_Logistic.x
 
 
     #Gompertz
+    print("Gompertz")
+    k = np.gradient(np.log((data-X0)/(XF-X0)))[t0]
+    print("Gompertz estimated k is ",k)
+    params_init[0] = np.log10(k)
+    print("Gompertz Initial Guess",10**np.asarray(params_init))
     objective = Objectives.MakeObjective_Fits(Models.Gompertz,data)
     S_Mono_Gompertz = least_squares(objective,params_init,
-            ftol=1e-12,f_scale=0.05,loss='soft_l1')
+            ftol=1e-12,f_scale=f_scale,loss=lossfun)
 
-    print(10**S_Mono_Gompertz.x)
-    print(S_Mono_Gompertz.cost)
+    print("Gompertz Fitting",10**S_Mono_Gompertz.x)
+    print("Gompertz cost", S_Mono_Gompertz.cost)
     Sr_G,SK_G,SIC_G,t0_G = S_Mono_Gompertz.x
 
 
@@ -178,18 +201,18 @@ for i in DATA:
 
 
     params_kinetic = (-9,10,0,np.log10(data[0]))
-
+    print("Kinetic Initial guess:",10**np.asarray(params_kinetic))
     lower = [-10,8,-1,params_kinetic[-1]-1]
     upper = [-8,12,1,params_kinetic[-1]+1]
 
     objective = Objectives.MakeObjective_Kinetic(Models.Kinetic_Monoculture,[data])
     KineticModel = least_squares(objective,params_kinetic,bounds=(lower,upper),
-            ftol=1e-12,f_scale=1,loss='soft_l1')
+            ftol=1e-12,f_scale=f_scale,loss=lossfun)
 
     kc,Y,kx,X0 = KineticModel.x
 
-    print(10**KineticModel.x)
-    print(KineticModel.cost)
+    print("Kinetic fitting",10**KineticModel.x)
+    print("Kinetic Cost",KineticModel.cost)
     params = (kc,Y,kx)
 
     Fitted_Kinetic = solve_ivp(Models.Kinetic_Monoculture,[0,len(data)],[10**X0,0,0.1],args=tuple(params),
