@@ -173,6 +173,8 @@ for i in DATA:
     ax1.set_xticks([0, 2, 4, 6, 8, 10, 12, 14])
     ax1.set_xticklabels([r'$0$', r'$2$', r'$4$', r'$6$', r'$8$', r'$10$', r'$12$', r'$14$'])
 
+    ax1.tick_params(which='both',direction='in')
+
 
     plt.xticks(fontsize=7, fontname='Arial')
     plt.yticks(fontsize=7, fontname='Arial')

@@ -147,7 +147,7 @@ fig, ax1 = plt.subplots(figsize=(width, height))
 
 s = 10
 # LEFT AXIS: Closed system
-ax1.semilogy(Fitted_Mono_Closed.t, Fitted_Mono_Closed.y[0], linewidth=2,color='k',zorder=5)
+ax1.semilogy(Fitted_Mono_Closed.t, Fitted_Mono_Closed.y[0], linewidth=2,color='k')
 ax1.scatter(np.arange(len(S_Mono)),S_Mono, marker='s', s=s, color='none',edgecolors='k', zorder=10,alpha = 0.5)
 
 ax1.set_yticks([1e6, 1e7, 1e8, 1e9, 1e10])
@@ -158,6 +158,8 @@ ax1.set_ylim(1e6, 1e10)
 ax1.set_xticks([0, 2, 4, 6, 8, 10, 12, 14])
 ax1.set_xticklabels([r'$0$', r'$2$', r'$4$', r'$6$', r'$8$', r'$10$', r'$12$', r'$14$'])
 
+ax1.tick_params(which='both',direction='in')
+
 
 plt.xticks(fontsize=7, fontname='Arial')
 plt.yticks(fontsize=7, fontname='Arial')
@@ -166,16 +168,18 @@ plt.yticks(fontsize=7, fontname='Arial')
 # RIGHT AXIS: Open system
 ax2 = ax1.twinx()
 
-ax2.semilogy(Fitted_Mono.t,Fitted_Mono.y[0], linewidth=2,linestyle='dashed',color='k',zorder=10)
-ax2.scatter(S_Mono_Open_Time,S_Mono_Open, marker='o', s=s, color='none',edgecolors='k', zorder=2,alpha=0.5)
+ax2.semilogy(Fitted_Mono.t,Fitted_Mono.y[0], linewidth=2,linestyle='dashed',color='k')
+ax2.scatter(S_Mono_Open_Time,S_Mono_Open, marker='o', s=s, color='none',edgecolors='k', zorder=10,alpha=0.5)
 
-ax2.semilogy(Fitted_Co.t,Fitted_Co.y[0], linewidth=2,linestyle='dashed',color='gray',zorder=10)
-ax2.scatter(S_Co_Open_Time,S_Co_Open, marker='o', s=s, color='none',edgecolors='gray', zorder=2,alpha=0.5)
+ax2.semilogy(Fitted_Co.t,Fitted_Co.y[0], linewidth=2,linestyle='dashed',color='gray')
+ax2.scatter(S_Co_Open_Time,S_Co_Open, marker='o', s=s, color='none',edgecolors='gray', zorder=10,alpha=0.5)
 
 
 ax2.set_yticks([1e0, 1e1, 1e2, 1e3])
 ax2.set_yticklabels([r'$10^0$',r'$10^1$', r'$10^2$', r'$10^3$'])
 ax2.set_ylim(1, 1e3)
+
+ax2.tick_params(which= 'both',direction='in')
 
 plt.xticks(fontsize=7, fontname='Arial')
 plt.yticks(fontsize=7, fontname='Arial')
@@ -325,6 +329,7 @@ ax1.set_ylim(1e6, 1e10)
 ax1.set_xticks([0, 2, 4, 6, 8, 10, 12, 14])
 ax1.set_xticklabels([r'$0$', r'$2$', r'$4$', r'$6$', r'$8$', r'$10$', r'$12$', r'$14$'])
 
+ax1.tick_params(which='both',direction='in')
 
 plt.xticks(fontsize=7, fontname='Arial')
 plt.yticks(fontsize=7, fontname='Arial')
@@ -338,6 +343,9 @@ ax2.scatter(P_Open_Time, P_Open, marker='o', s=s, color='none',edgecolors='k', z
 ax2.set_yticks([1e1, 1e2, 1e3])
 ax2.set_yticklabels([r'$10^1$', r'$10^2$', r'$10^3$'])
 ax2.set_ylim(10, 1e3)
+
+ax2.tick_params(which='both',direction='in')
+
 
 plt.xticks(fontsize=7, fontname='Arial')
 plt.yticks(fontsize=7, fontname='Arial')
