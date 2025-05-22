@@ -15,7 +15,7 @@ from Data import *
 
 #############################################################################
 #Obtain starting parameters from Fig1                                       #
-output_params = np.load("../Fig1/output_params.npz")                        #
+output_params = np.load("../Fig2_Fitting/output_params.npz")                #
                                                                             #
 Sr = output_params["Sr"]                                                    #
 Sb = output_params["Sb"]                                                    #
@@ -124,7 +124,69 @@ for i in DATA:
     Sr_G,SK_G,SIC_G,t0_G = S_Mono_Gompertz.x
 
 
+    print("Kinetic")
+    params_kinetic = (-9,10,0,np.log10(data[0]))
+    print("Kinetic Initial guess:",10**np.asarray(params_kinetic))
+    lower = [-10,8,-1,params_kinetic[-1]-1]
+    upper = [-8,12,1,params_kinetic[-1]+1]
 
+    objective = Objectives.MakeObjective_Kinetic(Models.Kinetic_Monoculture,[data])
+    KineticModel = least_squares(objective,params_kinetic,bounds=(lower,upper),
+            ftol=1e-12,f_scale=f_scale,loss=lossfun)
+
+    kc,Y,kx,X0 = KineticModel.x
+
+    print("Kinetic fitting",10**KineticModel.x)
+    print("Kinetic Cost",KineticModel.cost)
+    params = (kc,Y,kx)
+
+    Fitted_Kinetic = solve_ivp(Models.Kinetic_Monoculture,[0,len(data)],[10**X0,0,0.1],args=tuple(params),
+            t_eval=np.arange(len(data)))
+
+
+
+    t = np.linspace(0,len(data)-1,100)
+
+
+    width = 80/25.4#40 / 25.4
+    height = 40/25.4#30/25.4
+    fig, ax1 = plt.subplots(figsize=(width,height))
+
+    s = 5
+    ax1.semilogy(Fitted_Mono_Closed.t,Fitted_Mono_Closed.y[0],
+            linewidth = 1,label='Activity',color='k',alpha=0.5)
+    ax1.semilogy(t,Models.Logistic(t,Sr_L,SK_L,SIC_L,t0_L),
+            linewidth=1,linestyle='dashed',color='k',alpha=0.5)
+    ax1.semilogy(t,Models.Gompertz(t,Sr_G,SK_G,SIC_G,t0_G),
+            linewidth=1,linestyle='dotted',color='k',alpha=0.5)
+    ax1.semilogy(Fitted_Kinetic.t,Fitted_Kinetic.y[0],
+            linewidth=1,linestyle='-.',color='k',alpha=0.5)
+    ax1.scatter(np.arange(len(data)),data,
+            s=s,color='k',zorder=10)
+
+    ax1.set_yticks([1e6, 1e7, 1e8, 1e9, 1e10])
+    ax1.set_yticklabels([r'$10^6$', r'$10^7$', r'$10^8$', r'$10^9$', r'$10^{10}$'])
+    ax1.set_ylim(1e6, 1e10)
+
+    # X axis
+    ax1.set_xticks([0, 2, 4, 6, 8, 10, 12, 14])
+    ax1.set_xticklabels([r'$0$', r'$2$', r'$4$', r'$6$', r'$8$', r'$10$', r'$12$', r'$14$'])
+
+
+    plt.xticks(fontsize=7, fontname='Arial')
+    plt.yticks(fontsize=7, fontname='Arial')
+
+    plt.xticks(fontsize=7, fontname='Arial')
+    plt.yticks(fontsize=7, fontname='Arial')
+
+    plt.ylim(1e6,10**(10.5))
+
+    plt.savefig(str(i) + "_Comparisons.png",bbox_inches='tight', dpi=300)
+    plt.close()
+
+
+
+    """
     #######################################################
     #Comapring fits
 
@@ -180,24 +242,14 @@ for i in DATA:
     plt.savefig(str(i) + "_Comparisons.png",bbox_inches='tight', dpi=300)
     plt.close()
 
+    """
 
 
 
-
-
+    """
     #Doing Kinetic fits
     #Params: kc,Y,kx, X0
     print("Kinetic Fit")
-    
-    
-
-    """
-    data *= 100
-    params_kinetic = (-11,9,0,np.log10(data[0]))
-
-    lower = [-12,8,-1,params_kinetic[-1]-1]
-    upper = [-10,10,1,params_kinetic[-1]+1]
-    """
 
 
     params_kinetic = (-9,10,0,np.log10(data[0]))
@@ -266,3 +318,4 @@ for i in DATA:
 
     plt.savefig(str(i) + "_KineticComparisons.png",bbox_inches='tight', dpi=300)
     plt.close()
+    """
