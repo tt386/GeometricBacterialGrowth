@@ -152,17 +152,18 @@ for i in DATA:
     height = 40/25.4#30/25.4
     fig, ax1 = plt.subplots(figsize=(width,height))
 
-    s = 5
+    s = 10
     ax1.semilogy(Fitted_Mono_Closed.t,Fitted_Mono_Closed.y[0],
-            linewidth = 1,label='Activity',color='k',alpha=0.5)
+            linewidth = 2,label='Activity',color='k',alpha=1)
     ax1.semilogy(t,Models.Logistic(t,Sr_L,SK_L,SIC_L,t0_L),
-            linewidth=1,linestyle='dashed',color='k',alpha=0.5)
+            linewidth=2,linestyle='dashed',color='#D81B60',alpha=0.8)
     ax1.semilogy(t,Models.Gompertz(t,Sr_G,SK_G,SIC_G,t0_G),
-            linewidth=1,linestyle='dotted',color='k',alpha=0.5)
+            linewidth=2,linestyle='dotted',color='#1E88E5',alpha=0.8)
     ax1.semilogy(Fitted_Kinetic.t,Fitted_Kinetic.y[0],
-            linewidth=1,linestyle='-.',color='k',alpha=0.5)
+            linewidth=2,linestyle='-.',color='#FFC107',alpha=0.8)
+
     ax1.scatter(np.arange(len(data)),data,
-            s=s,color='k',zorder=10)
+            s=s,marker='s',color='none',edgecolors='k',zorder=10)
 
     ax1.set_yticks([1e6, 1e7, 1e8, 1e9, 1e10])
     ax1.set_yticklabels([r'$10^6$', r'$10^7$', r'$10^8$', r'$10^9$', r'$10^{10}$'])
