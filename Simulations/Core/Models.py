@@ -1,7 +1,7 @@
 import numpy as np
 
 
-
+FULL = True
 
 
 def MonoCulture_Closed(t,z,r,b,g1,g2,T,I0):
@@ -42,11 +42,20 @@ def MonoCulture_Closed(t,z,r,b,g1,g2,T,I0):
     I0 = 10**I0
 
     if t < T:
-        rate = r * np.exp(-b*I0 * np.exp(-g1*t))
+        I = I0 * np.exp(-g1*t)
+        #rate = r * np.exp(-b*I0 * np.exp(-g1*t))
 
     else:
-        rate = r * np.exp(-b * (1 + (I0*np.exp(-g1*T)-1) *
-            np.exp(-g2*(t-T))))
+        I = 1 + ((I0*np.exp(-g1*T)-1) *
+            np.exp(-g2*(t-T)))
+        #rate = r * np.exp(-b * (1 + (I0*np.exp(-g1*T)-1) *
+        #    np.exp(-g2*(t-T))))
+
+
+    rate = r * np.exp(-b*I) 
+
+    if FULL:
+        rate *= (1 - np.exp(-b*(1-I)))/ (1-np.exp(-b))
 
     dXdt = rate * X
 
@@ -54,7 +63,7 @@ def MonoCulture_Closed(t,z,r,b,g1,g2,T,I0):
 
 
 
-def MonoCulture_Open_Saureus(t,z,r,b,g1):
+def MonoCulture_Open_Saureus(t,z,r,b,g1,I0=None):
     """
     ODE model for monoculture of S.aureus in an open environment
     To be evaluated with solve_ivp
@@ -70,6 +79,9 @@ def MonoCulture_Open_Saureus(t,z,r,b,g1):
         Coefficient for the impact of inactive components, capturing I0 too
     g1: float
         Rate of component activation
+    I0: float or None
+        The initial proportion of inactive components: in the coculture saureus
+        case, we couple b and I0, so I0 can be none
 
     RETURNS:
     [dXdt]:
@@ -82,14 +94,28 @@ def MonoCulture_Open_Saureus(t,z,r,b,g1):
     b = 10**b
     g1 = 10**g1
 
-    rate = r * np.exp(-b * np.exp(-g1*t))
+    if I0 is not None:
+        I0 = 10**I0
+
+    if I0 is None:
+        I = np.exp(-g1*t)
+    else:
+        I = I0 * np.exp(-g1*t)
+
+    rate = r * np.exp(-b*I)
+
+    if FULL and (I0 is not None):
+        rate*= (1 - np.exp(-b*(1-I)))/ (1-np.exp(-b))
+
+    #rate = r * np.exp(-b * np.exp(-g1*t))
 
     dXdt = rate * X
+    #print(dXdt)
 
     return dXdt
 
 
-def MonoCulture_Open_Paeruginosa(t,z,r,b,g1,Ex,Ec):
+def MonoCulture_Open_Paeruginosa(t,z,r,b,g1,Ex,Ec,I0):
     """
     ODE model for monoculture of P.aeruginosa in an open environment
     To be evaluated with solve_ivp
@@ -120,8 +146,14 @@ def MonoCulture_Open_Paeruginosa(t,z,r,b,g1,Ex,Ec):
     g1 = 10**g1
     Ex = 10**Ex
     Ec = 10**Ec
+    I0 = 10**I0
 
-    rate = r * np.exp(-b * np.exp(-g1*t))
+    I = I0*np.exp(-g1*t)
+    #rate = r * np.exp(-b * np.exp(-g1*t))
+    rate = r * np.exp(-b*I)
+    if FULL:
+        rate*= (1 - np.exp(-b*(1-I)))/ (1-np.exp(-b))
+
 
     dXdt = rate*X - Ex*X*Q * rate/r
     dQdt = rate/r * X - Ec*Q

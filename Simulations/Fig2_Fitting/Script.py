@@ -32,11 +32,11 @@ ST = 4  #Last point of linearity
 
 #Mono closed
 tlag_closed = 1     #Time at which the lag ends
-lagwidth_closed = 1 #Approximate width of the lag
+lagwidth_closed = 2#1 #Approximate width of the lag
 
 #Mono_open
 tlag_monoopen = 0.1
-lagwidth_monoopen = 1
+lagwidth_monoopen = 2#1
 
 #Co_open
 tlag_open = 6
@@ -79,10 +79,10 @@ upper= (0.3,
         1,1,0,
         1,
         np.inf,np.inf,np.inf)
-
+"""
 for i in range(len(params_init)):
     print(Param_Names[i],lower[i],params_init[i],upper[i],sep='\t')
-
+"""
 """
 params_init = (np.log10(1.8),   
         2,-2,-1,1,  
@@ -106,13 +106,14 @@ results = least_squares(objective,params_init,ftol=1e-14,f_scale=1,loss='soft_l1
         bounds=[lower,upper],
         max_nfev=100000)
 
-print("ALL S MONO")
-print(10**results.x)
+#print("ALL S MONO")
+#print(10**results.x)
 
 Sr,Sb,SI0_closed,SI0_open,SbI0,Sg1_mono,Sg1_co,Sg2,ST,SMonoClosed0,SMono0,SCo0 = results.x
 
 ICs = [10**SMonoClosed0]
 
+print("Compare initial guess to response for Saureus")
 for i in range(len(params_init)):
     print(Param_Names[i],10**params_init[i],10**results.x[i],sep='\t')
 
@@ -126,7 +127,9 @@ Fitted_Mono_Closed = solve_ivp(Models.MonoCulture_Closed,[0,len(S_Mono)],ICs,arg
 ICs = [10**SMono0]
 #Mono
 #params = (Sr,Sb1,Sg1)
-params = (Sr,Sb+SI0_open,Sg1_mono)
+#params = (Sr,Sb+SI0_open,Sg1_mono)
+params = (Sr,Sb,Sg1_mono,SI0_open)
+
 Fitted_Mono = solve_ivp(Models.MonoCulture_Open_Saureus,[0,S_Mono_Open_Time[-1]],ICs,args=tuple(params),
                 t_eval=S_Mono_Open_Time)
 
@@ -271,9 +274,10 @@ upper = (0.5,
         1,1,
         np.inf,np.inf)
 
+"""
 for i in range(len(params_init)):
     print(lower[i],params_init[i],upper[i])
-
+"""
 
 
 objective = Objectives.MakeObjective_ClosedOpen_Paeruginosa(
@@ -284,9 +288,9 @@ results = least_squares(objective,params_init,ftol=1e-14,f_scale=1,
         loss='linear',
         bounds = [lower,upper])
 
-print(10**results.x)
+#print(10**results.x)
 
-
+print("Compare initial guess to response for Saureus")
 for i in range(len(params_init)):
     print(Param_Names[i],10**params_init[i],10**results.x[i],sep='\t')
 
@@ -301,7 +305,9 @@ result_Closed = solve_ivp(Models.MonoCulture_Closed,[0,len(P_Mono)],ICs,args=tup
 
 
 
-Params_Open = (Pr,Pb+PIOpen,Pg1,Ex,Ec)
+#Params_Open = (Pr,Pb+PIOpen,Pg1,Ex,Ec)
+Params_Open = (Pr,Pb,Pg1,Ex,Ec,PIOpen)
+
 ICs = [10**PX0_Open,0]
 
 result_Open = solve_ivp(Models.MonoCulture_Open_Paeruginosa,[0,P_Open_Time[-1]],ICs,args=tuple(Params_Open),

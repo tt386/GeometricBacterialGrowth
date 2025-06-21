@@ -51,7 +51,8 @@ def MakeObjective_ClosedOpen_Saureus(Model_Closed,Model_Open,datas,time):
 
 
         # Open, Monoculute
-        params = (alpha,b+I_openMono,g1_mono)
+        #params = (alpha,b+I_openMono,g1_mono)
+        params = (alpha,b,g1_mono,I_openMono)
         ICs = [10**X0_OpenMono]
 
         result_OpenMono = solve_ivp(Model_Open,[0,time[1][-1]],ICs,
@@ -62,7 +63,7 @@ def MakeObjective_ClosedOpen_Saureus(Model_Closed,Model_Open,datas,time):
 
 
         #Open. from coculture
-        params = (alpha,bI0,g1_co)
+        params = (alpha,bI0,g1_co,None)
         ICs = [10**X0_OpenCo]
 
         result_OpenCo = solve_ivp(Model_Open,[0,time[2][-1]],ICs,
@@ -99,7 +100,8 @@ def MakeObjective_ClosedOpen_Paeruginosa(Model_Closed,Model_Open,datas,time):
                 args=tuple(params),
                 t_eval=time[0])
 
-        params = (alpha,b+IOpen,g1,Ex,Ec)
+        #params = (alpha,b+IOpen,g1,Ex,Ec)
+        params = (alpha,b,g1,Ex,Ec,IOpen)
         ICs = [10**X0_Open,0]
 
         result_Open = solve_ivp(Model_Open,[0,time[1][-1]],ICs,
