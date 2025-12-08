@@ -32,7 +32,7 @@ ST = 4  #Last point of linearity
 
 #Mono closed
 tlag_closed = 1     #Time at which the lag ends
-lagwidth_closed = 2#1 #Approximate width of the lag
+lagwidth_closed = 1#2#1 #Approximate width of the lag
 
 #Mono_open
 tlag_monoopen = 0.1
@@ -42,8 +42,8 @@ lagwidth_monoopen = 2#1
 tlag_open = 6
 lagwidth_open = 4
 
-tendlag_closed =  12 - ST        #Time when saturation phase starts, minus T
-endlagwidth_closed = 8          #Width of the saturation transition
+tendlag_closed =  8 - ST        #Time when saturation phase starts, minus T
+endlagwidth_closed = 4          #Width of the saturation transition
 
 
 
@@ -212,11 +212,11 @@ Param_Names = ("alpha",
 
 
 #Observed:
-PT = 7
+PT = 6.5#7
 
 #Mono closed
-tlag_closed = 1
-lagwidth_closed = 1
+tlag_closed = 1.5
+lagwidth_closed = 2#1
 
 
 #Co_open
@@ -225,7 +225,7 @@ lagwidth_open = 1
 
 
 tendlag_closed =  8 - PT
-endlagwidth_closed = 1
+endlagwidth_closed = 0.5
 
 
 

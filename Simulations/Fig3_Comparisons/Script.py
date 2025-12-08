@@ -32,6 +32,70 @@ PT = output_params["PT"]                                                    #
 PI0 = output_params["PIClosed"]                                             #
 #############################################################################
 
+#Obtain starting from just data:
+#Observed:
+ST = 4  #Last point of linearity
+
+#Mono closed
+tlag_closed = 1     #Time at which the lag ends
+lagwidth_closed = 1#1 #Approximate width of the lag
+
+#Co_open
+
+tendlag_closed =  8 - ST        #Time when saturation phase starts, minus T
+endlagwidth_closed = 4          #Width of the saturation transition
+
+
+#Parameter estimation:
+Sr = np.max(np.diff(np.log(S_Mono)))
+Sg1 = 1/lagwidth_closed * np.log((3 + np.sqrt(5))/(3 - np.sqrt(5)))
+Sg2 = 1/endlagwidth_closed * np.log((3+np.sqrt(5))/ (3 - np.sqrt(5)))
+
+Sb = np.exp(Sg2 * tendlag_closed)
+SI0 = np.exp(tlag_closed * Sg1) / Sb
+
+##############################################################################
+
+
+#Observed:
+PT = 6.5##7
+
+#Mono closed
+tlag_closed = 1.5
+lagwidth_closed = 2#1
+
+
+#Co_open
+tlag_open = 1
+
+
+tendlag_closed =  8 - PT
+endlagwidth_closed = 0.5#1
+
+
+#Parameter estimation:
+Pr = np.max(np.diff(np.log(P_Mono)))
+Pg1 = 1/lagwidth_closed * np.log((3 + np.sqrt(5))/(3 - np.sqrt(5)))
+Pg2 = 1/endlagwidth_closed * np.log((3+np.sqrt(5))/ (3 - np.sqrt(5)))
+
+Pb = np.exp(Pg2 * tendlag_closed)
+PI0 = np.exp(tlag_closed * Pg1) / Pb
+##############################################################################
+
+print("Initial guesses, S:",[Sr,Sb,Sg1,Sg2,ST,SI0 ])
+
+print("Initial guesses, P:",[Pr,Pb,Pg1,Pg2,PT,PI0 ])
+
+
+Sr,Sb,Sg1,Sg2,ST,SI0 = np.log10(np.asarray([Sr,Sb,Sg1,Sg2,ST,SI0 ]))
+Pr,Pb,Pg1,Pg2,PT,PI0 = np.log10(np.asarray([Pr,Pb,Pg1,Pg2,PT,PI0 ]))
+
+
+
+
+
+
+
 #Loss function
 lossfun = 'linear'#'soft_l1'
 f_scale = 1#0.05
@@ -60,11 +124,28 @@ for i in DATA:
         #params_init = (np.log10(1.18),np.log10(48),np.log10(3.65),np.log10(2.94*10**-2),np.log10(6.39),np.log10(0.93),np.log10(data[0]))
 
 
+    #Insight - driven
+    lower = (0,0,-3,-3,0,-5,-np.inf)
+    upper = (0.5,4,1,1,1,0,np.inf)
+
+
+    #Agnostic - driven
+    lower = (-np.inf,-np.inf,-np.inf,-np.inf,-np.inf,-np.inf,-np.inf)
+    upper = (np.inf,np.inf,np.inf,np.inf,np.inf,0,np.inf)
+
+
+
+    for j in range(len(params_init)):
+        print(lower[j],10**params_init[j],upper[j])
+
+
+
+
     objective = Objectives.MakeObjective(
             Models.MonoCulture_Closed,[data],[0])
 
-    results = least_squares(objective,params_init,ftol=1e-14,f_scale=f_scale,loss=lossfun)#,
-    #        bounds=[lower,upper])
+    results = least_squares(objective,params_init,ftol=1e-14,f_scale=f_scale,loss=lossfun,
+            bounds=[lower,upper])
 
     #Sr,Sb,I0_closed,I0_open,bI0,Sg1_mono,Sg1_co,Sg2,ST,SMonoClosed0,SMono0,SCo0 = results.x
 
