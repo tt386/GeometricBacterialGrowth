@@ -1,4 +1,4 @@
-# Code for "A geometrical model..."
+# Code for ["A mechanically-inspired geometric model to predict microbial growth across environments"](https://doi.org/10.1101/2025.07.02.662826)
 
 ## Overview
 
