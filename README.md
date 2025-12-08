@@ -22,7 +22,7 @@ We have included all data files and results pertinent to the manuscript (except 
 
 The geometric model of bacterial growth models how the concentration of bacteria, $X(t)$, as the proportion of inactive components within the cell, $I(t)$ varies.
 
-$$\frac{dX}{dt} = \alpha \frac{e^{-\beta I(t)} - e^{-\beta}}{1 - e^{-\beta}}$$
+$$\frac{dX}{dt} = \alpha \frac{e^{-\beta I(t)} - e^{-\beta}}{1 - e^{-\beta}} X $$
 
 $$
 I(t)=
