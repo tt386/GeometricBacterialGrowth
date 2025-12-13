@@ -7,8 +7,8 @@ E_Q = 4 * alpha
 
 
 
-width = 40/25.4#40 / 25.4
-height = 40/25.4#30/25.4
+width = 80/25.4#40 / 25.4
+height = 80/25.4#30/25.4
 fig, ax = plt.subplots(figsize=(width,height))
 
 
@@ -31,6 +31,13 @@ ax.set_ylabel(r'$E_Q$')
 # Limits (adjust as needed)
 ax.set_xlim(alpha.min(), alpha.max())
 ax.set_ylim(0, E_Q.max())
+
+
+ax.set_xticks([0,0.5,1])
+ax.set_xticklabels([r'$0$',r'$0.5$' ,r'$1$'])
+
+ax.set_yticks([0,2,4])
+ax.set_yticklabels([r'$0$',r'$2$', r'$4$'])
 
 
 
