@@ -23,7 +23,7 @@ def system(t, y, a):
     return [dXdt, dQdt]
 
 # Parameters
-alphas = [0.1, 0.25, 0.7]
+alphas = [0.1, 0.25, 0.8]
 t_span = (0, 20)
 t_eval = np.linspace(*t_span, 2000)
 y0 = [1,0]
@@ -72,7 +72,7 @@ ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
 plt.xticks(fontsize=7, fontname='Arial')
 plt.yticks(fontsize=7, fontname='Arial')
 
-
+plt.xlim(0,t_span[-1])
 
 plt.savefig("Example_Solutions.png",bbox_inches='tight', dpi=300)
 
