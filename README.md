@@ -12,9 +12,9 @@
 
 ## Publications
 
-Manuscript awaiting publication.
+Manuscript awaiting publication: read the [pre-print](https://doi.org/10.1101/2025.07.02.662826).
 
-Data derived from and fitting employed [here](https://doi.org/10.1101/2025.04.30.651255)
+Data derived from and fitting employed [here](https://doi.org/10.1101/2025.04.30.651255).
 
 We have included all data files and results pertinent to the manuscript (except those larger than 100MB).
 
@@ -61,7 +61,7 @@ Where:
 .afpub and corresponding .pdf files for the manuscript.
 
 ### RawFigures
-Source linking the .png files to the .afpub files
+Source linking the .png files to the .afpub files. Also includes a .py file which creates the figures relevant to Fig2.
 
 ### Core
 Files containing ubiquitous functions and data
@@ -78,7 +78,7 @@ Parameter fitting of *S. aureus* in closed-system monoculture, and open-system m
 
 Parameter fitting of *P. aeruginosa* in closed-system monoculture and open-system coculture.
 
-Save the fitting results in a `.npz` file for use in Fig2 and Fig3
+Save the fitting results in a `.npz` file for use in Fig3 and Fig4.
 
 #### Fig2
 Parameter fitting for different fits of monoculture data for logistic, Gompertz and a kinetic model, for the sake of comparison to the geometric model.
