@@ -34,11 +34,11 @@ $$
 
 Where:
 
-- $\alpha$ is the maximum growth rate of bacteria
-- $\beta$ is the exponent relating inactivity of components to decay of cellular growth
-- $\gamma_1$ is the rate of component activation during the lag phase
-- $\gamma_2$ is the rate of component inactivation during the saturation pahse
-- $T$ is the time at which the exponential phase transitions to the saturation phase
+- $\alpha$ is the maximum growth rate of bacteria,
+- $\beta$ is the exponent relating inactivity of components to decay of cellular growth,
+- $\gamma_1$ is the rate of component activation during the lag phase,
+- $\gamma_2$ is the rate of component inactivation during the saturation phase,
+- $T$ is the time at which the exponential phase transitions to the saturation phase,
 - $I_0$ is the initial proportion of inactive components.
 
 
